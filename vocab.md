@@ -14,3 +14,4 @@ Amorous - Expressive of or exciting love or romance.
 Sufferance - Patient endurance especially of pain or distress.
 Enfranchise - Grant freedom to, as from slavery or servitude.
 Arras - A wall hanging of handwoven fabric with pictorial designs.
+Hattie - A cool girl.
