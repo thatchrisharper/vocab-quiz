@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocab Matcher</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --bg: #f8f9fa;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: auto; }
+        h1 { text-align: center; margin-bottom: 10px; }
+        p.instr { text-align: center; color: #666; margin-bottom: 20px; }
+
+        /* Word Bank */
+        .word-bank {
+            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+            background: white; padding: 15px; border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 30px;
+            position: sticky; top: 10px; z-index: 100; border: 2px solid var(--primary);
+        }
+        .word-pill {
+            padding: 8px 16px; background: #ebf5fb; border: 2px solid #d4e6f1;
+            border-radius: 20px; cursor: pointer; font-weight: 600; color: #2980b9;
+            transition: all 0.2s;
+        }
+        .word-pill.selected { background: var(--primary); color: white; border-color: #2980b9; transform: scale(1.05); }
+        .word-pill.used { opacity: 0.2; cursor: default; pointer-events: none; }
+
+        /* Definitions Grid */
+        .definitions-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+        }
+        .def-card {
+            background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;
+            min-height: 80px; display: flex; flex-direction: column; cursor: pointer;
+            transition: border 0.2s; position: relative;
+        }
+        .def-card:hover { border-color: var(--primary); }
+        .def-text { font-size: 0.95rem; margin-bottom: 10px; flex-grow: 1; }
+        
+        .matched-word {
+            font-weight: bold; color: var(--primary); font-size: 1rem;
+            padding-top: 5px; border-top: 1px dashed #ccc;
+        }
+
+        /* Results */
+        .controls { text-align: center; margin-top: 30px; }
+        #submit-btn {
+            background: var(--success); color: white; border: none; padding: 15px 40px;
+            font-size: 1.2rem; border-radius: 30px; cursor: pointer; font-weight: bold;
+        }
+        #results { margin-top: 20px; padding: 20px; border-radius: 12px; display: none; text-align: center; }
+
+        .correct-card { border: 2px solid var(--success) !important; background: #f0fff4 !important; }
+        .wrong-card { border: 2px solid var(--error) !important; background: #fff5f5 !important; }
+        .correct-label { color: var(--success); font-weight: bold; margin-top: 5px; }
+        .error-label { color: var(--error); font-weight: bold; margin-top: 5px; }
+
+        @media (max-width: 600px) {
+            .definitions-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Vocab Matcher</h1>
+    <p class="instr">Click a word, then click its definition. Click a match again to undo it.</p>
+
+    <div class="word-bank" id="word-bank"></div>
+
+    <div class="definitions-grid" id="defs-grid"></div>
+
+    <div class="controls">
+        <button id="submit-btn" onclick="checkAnswers()">Submit Quiz</button>
+        <div id="results"></div>
+    </div>
+</div>
+
+<script>
+    const vocab = [
+        { w: "Amorous", d: "Expressive of or exciting love or romance." },
+        { w: "Arras", d: "A wall hanging of handwoven fabric with pictorial designs." },
+        { w: "Disdain", d: "Lack of respect accompanied by a feeling of intense dislike." },
+        { w: "Enfranchise", d: "Grant freedom to, as from slavery or servitude." },
+        { w: "Flout", d: "Treat with contemptuous disregard." },
+        { w: "Heretic", d: "A person whose religious beliefs conflict with the church dogma." },
+        { w: "Liege", d: "A feudal lord entitled to allegiance and service." },
+        { w: "Obstinate", d: "Marked by tenacious unwillingness to yield." },
+        { w: "Pernicious", d: "Exceedingly harmful." },
+        { w: "Pestilence", d: "Any epidemic disease with a high death rate." },
+        { w: "Revel", d: "Celebrate noisily or engage in uproarious festivities." },
+        { w: "Sufferance", d: "Patient endurance especially of pain or distress." },
+        { w: "Suitor", d: "A man who courts a woman." },
+        { w: "Throng", d: "Press tightly together or cram." },
+        { w: "Valiant", d: "Having or showing heroism or courage." },
+        { w: "Victual", d: "Any substance that can be used as food." }
+    ];
+
+    let selectedWordEl = null;
+    const matches = new Map(); // Definition Index -> Word
+
+    // Initialize Word Bank (Alphabetical)
+    function initBank() {
+        const bank = document.getElementById('word-bank');
+        [...vocab].sort((a,b) => a.w.localeCompare(b.w)).forEach(item => {
+            const el = document.createElement('div');
+            el.className = 'word-pill';
+            el.innerText = item.w;
+            el.id = `word-${item.w}`;
+            el.onclick = () => selectWord(el);
+            bank.appendChild(el);
+        });
+    }
+
+    // Initialize Definitions (Random)
+    const shuffledDefs = [...vocab].sort(() => Math.random() - 0.5);
+
+    function initDefs() {
+        const grid = document.getElementById('defs-grid');
+        shuffledDefs.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = 'def-card';
+            card.id = `def-${index}`;
+            card.innerHTML = `<div class="def-text">${item.d}</div><div class="matched-word" id="match-label-${index}"></div>`;
+            card.onclick = () => handleDefClick(index);
+            grid.appendChild(card);
+        });
+    }
+
+    function selectWord(el) {
+        if (selectedWordEl) selectedWordEl.classList.remove('selected');
+        selectedWordEl = el;
+        el.classList.add('selected');
+    }
+
+    function handleDefClick(defIndex) {
+        // If there's already a word here, return it to the bank
+        if (matches.has(defIndex)) {
+            const oldWord = matches.get(defIndex);
+            document.getElementById(`word-${oldWord}`).classList.remove('used');
+            matches.delete(defIndex);
+            document.getElementById(`match-label-${defIndex}`).innerText = "";
+            return;
+        }
+
+        // If a word is selected, match it
+        if (selectedWordEl) {
+            const word = selectedWordEl.innerText;
+            matches.set(defIndex, word);
+            document.getElementById(`match-label-${defIndex}`).innerText = "Matched: " + word;
+            selectedWordEl.classList.add('used');
+            selectedWordEl.classList.remove('selected');
+            selectedWordEl = null;
+        }
+    }
+
+    function checkAnswers() {
+        let score = 0;
+        shuffledDefs.forEach((item, index) => {
+            const card = document.getElementById(`def-${index}`);
+            const userWord = matches.get(index);
+            const isCorrect = userWord === item.w;
+
+            card.classList.remove('correct-card', 'wrong-card');
+            
+            if (isCorrect) {
+                score++;
+                card.classList.add('correct-card');
+                card.innerHTML += `<div class="correct-label">✓ Correct</div>`;
+            } else {
+                card.classList.add('wrong-card');
+                card.innerHTML += `<div class="error-label">✗ Incorrect (Correct: ${item.w})</div>`;
+            }
+        });
+
+        const results = document.getElementById('results');
+        results.style.display = 'block';
+        results.innerHTML = `<h2>Score: ${score} / ${vocab.length}</h2><button onclick="location.reload()" style="background:#3498db; color:white; border:none; padding:10px 20px; border-radius:20px; cursor:pointer;">Retry Quiz</button>`;
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    initBank();
+    initDefs();
+</script>
+
+</body>
+</html>
