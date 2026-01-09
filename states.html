@@ -10,6 +10,7 @@
         :root {
             --primary: #2563eb;
             --success: #22c55e;
+            --warning: #f59e0b; /* Yellow for partial credit */
             --error: #ef4444;
             --bg: #f8fafc;
         }
@@ -37,7 +38,6 @@
             overflow: hidden;
         }
 
-        /* Responsive SVG Logic */
         svg {
             display: block;
             width: 100%;
@@ -52,13 +52,14 @@
             transition: fill 0.2s;
         }
 
-        /* Active state */
         .state.active { 
             fill: var(--primary); 
             stroke: #1e40af;
         }
         
+        /* Map Coloring Logic */
         .state.correct { fill: var(--success); }
+        .state.partial { fill: var(--warning); } /* Shows yellow on map if answer was partial */
         .state.incorrect { fill: var(--error); }
 
         .state-label {
@@ -69,11 +70,7 @@
             text-anchor: middle;
             alignment-baseline: middle;
             font-family: sans-serif;
-            text-shadow: 
-                -1px -1px 0 #fff,  
-                 1px -1px 0 #fff,
-                -1px  1px 0 #fff,
-                 1px  1px 0 #fff;
+            text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
         }
         
         .state-label.active { fill: white; text-shadow: none; }
@@ -125,21 +122,25 @@
             border: 1px solid #cbd5e1;
             border-radius: 4px;
             width: 100%;
-            font-size: 16px; /* Prevents zoom on iPad */
+            font-size: 16px;
             -webkit-appearance: none;
         }
 
         input:focus { outline: none; border-color: var(--primary); }
+        
+        /* Scoring Colors */
         input.correct { border-color: var(--success); background-color: #f0fdf4; }
+        input.partial { border-color: var(--warning); background-color: #fffbeb; } /* Yellow background */
         input.incorrect { border-color: var(--error); background-color: #fef2f2; }
 
         .answer-key {
             font-size: 12px;
-            color: var(--error);
+            color: #64748b;
             display: none;
             margin-top: 4px;
         }
         .show-key .answer-key { display: block; }
+        .answer-key b { color: #0f172a; }
 
         #controls {
             text-align: center;
@@ -161,12 +162,12 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        #loading-msg {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
+        #score-display {
+            text-align: center;
+            font-size: 24px;
             font-weight: bold;
-            color: #64748b;
+            margin: 20px 0;
+            display: none;
         }
     </style>
 </head>
@@ -174,11 +175,13 @@
 
     <h1>🇺🇸 50 States & Capitals</h1>
     <p style="text-align: center; color: #64748b; margin-bottom: 20px;">
-        Tap a box below to find the state on the map!
+        100 Points Total. Misspellings lose 0.5 points.
     </p>
 
+    <div id="score-display"></div>
+
     <div id="map-wrapper">
-        <div id="loading-msg">Loading Map...</div>
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#64748b;" id="loading-msg">Loading Map...</div>
     </div>
 
     <div id="quiz-form"></div>
@@ -189,7 +192,6 @@
     </div>
 
     <script>
-        // Data matching FIPS IDs
         const statesData = [
             { id: "01", name: "Alabama", capital: "Montgomery" },
             { id: "02", name: "Alaska", capital: "Juneau" },
@@ -251,16 +253,33 @@
             return array;
         }
 
+        // Levenshtein Distance for spell checking
+        function getEditDistance(a, b) {
+            if(a.length === 0) return b.length; 
+            if(b.length === 0) return a.length; 
+            var matrix = [];
+            for(var i = 0; i <= b.length; i++){ matrix[i] = [i]; }
+            for(var j = 0; j <= a.length; j++){ matrix[0][j] = j; }
+            for(var i = 1; i <= b.length; i++){
+                for(var j = 1; j <= a.length; j++){
+                    if(b.charAt(i-1) == a.charAt(j-1)){
+                        matrix[i][j] = matrix[i-1][j-1];
+                    } else {
+                        matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, matrix[i][j-1] + 1, matrix[i-1][j] + 1);
+                    }
+                }
+            }
+            return matrix[b.length][a.length];
+        }
+
         let quizData = [];
 
         async function init() {
-            // 1. Setup Quiz Data
             quizData = shuffle([...statesData]).map((state, index) => ({
                 ...state,
                 quizNumber: index + 1
             }));
 
-            // 2. Render Forms
             const formContainer = document.getElementById('quiz-form');
             quizData.sort((a,b) => a.quizNumber - b.quizNumber).forEach(item => {
                 const div = document.createElement('div');
@@ -277,24 +296,16 @@
                 formContainer.appendChild(div);
             });
 
-            // 3. Render Map
             const svg = d3.select("#map-wrapper").append("svg")
                 .attr("viewBox", "0 0 975 610")
                 .attr("preserveAspectRatio", "xMidYMid meet");
 
             try {
-                // Fetch PRE-PROJECTED Albers USA Map (No math required)
-                // This file is already in pixels (975x610), not GPS coordinates.
                 const us = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-albers-10m.json");
-                
                 document.getElementById('loading-msg').style.display = 'none';
-
-                // Pass null projection because data is already projected
                 const path = d3.geoPath(null);
-
                 const g = svg.append("g");
 
-                // Draw States
                 g.selectAll("path")
                     .data(topojson.feature(us, us.objects.states).features)
                     .enter().append("path")
@@ -302,7 +313,6 @@
                     .attr("class", "state")
                     .attr("id", d => `state-${d.id}`);
 
-                // Add Numbers
                 g.selectAll("text")
                     .data(topojson.feature(us, us.objects.states).features)
                     .enter().append("text")
@@ -310,17 +320,13 @@
                     .attr("transform", d => {
                         const centroid = path.centroid(d);
                         if (!centroid[0]) return "translate(-100,-100)"; 
-                        
-                        // Adjustments for crowded East Coast
                         let [x, y] = centroid;
                         const id = d.id;
-                        // Manual tweaks to ensure visibility
-                        if (id === "10") { x += 22; y += 4; } // DE
-                        if (id === "44") { x += 12; y += 12; } // RI
-                        if (id === "11") { y += 15; } // DC
-                        if (id === "24") { x += 10; y -= 10; } // MD
-                        if (id === "34") { x += 15; } // NJ
-                        
+                        if (id === "10") { x += 22; y += 4; } 
+                        if (id === "44") { x += 12; y += 12; } 
+                        if (id === "11") { y += 15; } 
+                        if (id === "24") { x += 10; y -= 10; } 
+                        if (id === "34") { x += 15; } 
                         return `translate(${x},${y})`;
                     })
                     .attr("id", d => `label-${d.id}`)
@@ -330,49 +336,77 @@
                     });
 
             } catch (error) {
-                document.getElementById('loading-msg').innerHTML = `
-                    <span style="color:red">Error loading map.<br>
-                    Please try a different browser or check internet.</span><br>
-                    <small>${error.message}</small>`;
+                document.getElementById('loading-msg').innerHTML = "Error loading map.";
             }
         }
 
-        // Interaction: Input -> Map
         function highlightState(id) {
             d3.selectAll(".state").classed("active", false);
             d3.selectAll(".state-label").classed("active", false);
-
             d3.select(`#state-${id}`).classed("active", true);
             d3.select(`#label-${id}`).classed("active", true);
         }
 
-        // Validation
+        function gradeInput(inputVal, correctVal) {
+            const val = inputVal.trim().toLowerCase();
+            const correct = correctVal.toLowerCase();
+            
+            if (val === correct) return 1; // Exact match
+            if (val.length === 0) return 0; // Empty
+
+            // Calculate typos
+            const dist = getEditDistance(val, correct);
+            
+            // Allow 1 typo for short words (<5 chars), 2 typos for long words
+            const threshold = correct.length < 5 ? 1 : 2;
+            
+            if (dist <= threshold) return 0.5; // Partial credit
+            return 0; // Wrong
+        }
+
         function checkAnswers() {
-            let score = 0;
+            let totalScore = 0;
+            
             quizData.forEach(item => {
                 const stateInput = document.getElementById(`input-state-${item.id}`);
                 const capInput = document.getElementById(`input-cap-${item.id}`);
                 const card = document.getElementById(`card-${item.id}`);
                 const statePath = d3.select(`#state-${item.id}`);
 
-                if(!stateInput) return; 
+                // Calculate individual points
+                const statePoints = gradeInput(stateInput.value, item.name);
+                const capPoints = gradeInput(capInput.value, item.capital);
 
-                const stateCorrect = stateInput.value.trim().toLowerCase() === item.name.toLowerCase();
-                const capCorrect = capInput.value.trim().toLowerCase() === item.capital.toLowerCase();
+                // Apply CSS Classes based on score
+                stateInput.className = statePoints === 1 ? 'correct' : (statePoints === 0.5 ? 'partial' : 'incorrect');
+                capInput.className = capPoints === 1 ? 'correct' : (capPoints === 0.5 ? 'partial' : 'incorrect');
 
-                stateInput.className = stateCorrect ? 'correct' : 'incorrect';
-                capInput.className = capCorrect ? 'correct' : 'incorrect';
-
-                if (stateCorrect && capCorrect) {
-                    statePath.classed("correct", true).classed("incorrect", false);
-                    score++;
+                // Map Coloring Logic:
+                // Green if both perfect (2pts)
+                // Yellow if partially correct (>= 1pt total)
+                // Red if mostly wrong (< 1pt total)
+                const itemTotal = statePoints + capPoints;
+                statePath.classed("correct", false).classed("partial", false).classed("incorrect", false);
+                
+                if (itemTotal === 2) {
+                    statePath.classed("correct", true);
+                } else if (itemTotal > 0) {
+                    statePath.classed("partial", true);
+                    card.classList.add("show-key");
                 } else {
-                    statePath.classed("incorrect", true).classed("correct", false);
+                    statePath.classed("incorrect", true);
                     card.classList.add("show-key");
                 }
+
+                totalScore += itemTotal;
             });
+
+            const scoreDisplay = document.getElementById('score-display');
+            scoreDisplay.style.display = 'block';
+            scoreDisplay.innerHTML = `Final Score: <span style="color:${totalScore >= 90 ? 'var(--success)' : 'var(--primary)'}">${totalScore} / 100</span>`;
+            
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            alert(`You got ${score} out of 50 correct!`);
+            alert(`You scored ${totalScore} out of 100!\n\nGreen boxes = 1 point\nYellow boxes = 0.5 points (typo)\nRed boxes = 0 points`);
         }
 
         init();
