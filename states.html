@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US States & Capitals Quiz</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #22c55e;
+            --error: #ef4444;
+            --bg: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--bg);
+        }
+
+        h1 { text-align: center; color: #1e293b; }
+        
+        /* Map Container */
+        #map-container {
+            width: 100%;
+            height: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            margin-bottom: 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border: 2px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .state {
+            fill: #cbd5e1;
+            stroke: white;
+            stroke-width: 1px;
+            cursor: pointer;
+            transition: fill 0.2s;
+        }
+
+        .state:hover { fill: #94a3b8; }
+        .state.active { fill: var(--primary); }
+        .state.correct { fill: var(--success); }
+        .state.incorrect { fill: var(--error); }
+
+        .state-label {
+            font-size: 10px;
+            font-weight: bold;
+            fill: #334155;
+            pointer-events: none; /* Let clicks pass through to state */
+            text-anchor: middle;
+            alignment-baseline: middle;
+        }
+
+        .state-label.active { fill: white; }
+
+        /* Quiz Form */
+        #quiz-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .question-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .question-card.active {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+            transform: scale(1.02);
+        }
+
+        .number-badge {
+            background: #1e293b;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            width: 100%;
+        }
+
+        input {
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        input.correct { border-color: var(--success); background-color: #f0fdf4; }
+        input.incorrect { border-color: var(--error); background-color: #fef2f2; }
+
+        /* Answer Key (Hidden by default) */
+        .answer-key {
+            font-size: 12px;
+            color: var(--error);
+            display: none;
+            margin-top: 4px;
+        }
+        .show-key .answer-key { display: block; }
+
+        #controls {
+            text-align: center;
+            margin: 40px 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background-color: var(--primary);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover { background-color: #1d4ed8; }
+        button#reset { background-color: #64748b; }
+
+    </style>
+</head>
+<body>
+
+    <h1>🇺🇸 50 States & Capitals Challenge</h1>
+    <p style="text-align: center; color: #64748b;">Click a state on the map or an input box to match them.</p>
+
+    <div id="map-container"></div>
+
+    <div id="quiz-form"></div>
+
+    <div id="controls">
+        <button onclick="checkAnswers()">Check Answers</button>
+        <button id="reset" onclick="location.reload()">New Quiz</button>
+    </div>
+
+    <script>
+        // Full Data for 50 States
+        const statesData = [
+            { id: "01", name: "Alabama", capital: "Montgomery" },
+            { id: "02", name: "Alaska", capital: "Juneau" },
+            { id: "04", name: "Arizona", capital: "Phoenix" },
+            { id: "05", name: "Arkansas", capital: "Little Rock" },
+            { id: "06", name: "California", capital: "Sacramento" },
+            { id: "08", name: "Colorado", capital: "Denver" },
+            { id: "09", name: "Connecticut", capital: "Hartford" },
+            { id: "10", name: "Delaware", capital: "Dover" },
+            { id: "12", name: "Florida", capital: "Tallahassee" },
+            { id: "13", name: "Georgia", capital: "Atlanta" },
+            { id: "15", name: "Hawaii", capital: "Honolulu" },
+            { id: "16", name: "Idaho", capital: "Boise" },
+            { id: "17", name: "Illinois", capital: "Springfield" },
+            { id: "18", name: "Indiana", capital: "Indianapolis" },
+            { id: "19", name: "Iowa", capital: "Des Moines" },
+            { id: "20", name: "Kansas", capital: "Topeka" },
+            { id: "21", name: "Kentucky", capital: "Frankfort" },
+            { id: "22", name: "Louisiana", capital: "Baton Rouge" },
+            { id: "23", name: "Maine", capital: "Augusta" },
+            { id: "24", name: "Maryland", capital: "Annapolis" },
+            { id: "25", name: "Massachusetts", capital: "Boston" },
+            { id: "26", name: "Michigan", capital: "Lansing" },
+            { id: "27", name: "Minnesota", capital: "Saint Paul" },
+            { id: "28", name: "Mississippi", capital: "Jackson" },
+            { id: "29", name: "Missouri", capital: "Jefferson City" },
+            { id: "30", name: "Montana", capital: "Helena" },
+            { id: "31", name: "Nebraska", capital: "Lincoln" },
+            { id: "32", name: "Nevada", capital: "Carson City" },
+            { id: "33", name: "New Hampshire", capital: "Concord" },
+            { id: "34", name: "New Jersey", capital: "Trenton" },
+            { id: "35", name: "New Mexico", capital: "Santa Fe" },
+            { id: "36", name: "New York", capital: "Albany" },
+            { id: "37", name: "North Carolina", capital: "Raleigh" },
+            { id: "38", name: "North Dakota", capital: "Bismarck" },
+            { id: "39", name: "Ohio", capital: "Columbus" },
+            { id: "40", name: "Oklahoma", capital: "Oklahoma City" },
+            { id: "41", name: "Oregon", capital: "Salem" },
+            { id: "42", name: "Pennsylvania", capital: "Harrisburg" },
+            { id: "44", name: "Rhode Island", capital: "Providence" },
+            { id: "45", name: "South Carolina", capital: "Columbia" },
+            { id: "46", name: "South Dakota", capital: "Pierre" },
+            { id: "47", name: "Tennessee", capital: "Nashville" },
+            { id: "48", name: "Texas", capital: "Austin" },
+            { id: "49", name: "Utah", capital: "Salt Lake City" },
+            { id: "50", name: "Vermont", capital: "Montpelier" },
+            { id: "51", name: "Virginia", capital: "Richmond" },
+            { id: "53", name: "Washington", capital: "Olympia" },
+            { id: "54", name: "West Virginia", capital: "Charleston" },
+            { id: "55", name: "Wisconsin", capital: "Madison" },
+            { id: "56", name: "Wyoming", capital: "Cheyenne" }
+        ];
+
+        // Shuffle function to randomize quiz order
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        let quizData = [];
+
+        // Initialize Map and Quiz
+        async function init() {
+            // 1. Setup the Quiz Data with Random Numbers
+            const shuffledStates = shuffle([...statesData]);
+            quizData = shuffledStates.map((state, index) => ({
+                ...state,
+                quizNumber: index + 1
+            }));
+
+            // 2. Render Input Forms
+            const formContainer = document.getElementById('quiz-form');
+            quizData.sort((a,b) => a.quizNumber - b.quizNumber).forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'question-card';
+                div.id = `card-${item.id}`; // US FIPS code as ID
+                div.innerHTML = `
+                    <div class="number-badge">${item.quizNumber}</div>
+                    <div class="inputs">
+                        <input type="text" placeholder="State Name" id="input-state-${item.id}" onfocus="highlightState('${item.id}')">
+                        <input type="text" placeholder="Capital City" id="input-cap-${item.id}" onfocus="highlightState('${item.id}')">
+                        <div class="answer-key">Correct: <b>${item.name}</b>, <b>${item.capital}</b></div>
+                    </div>
+                `;
+                formContainer.appendChild(div);
+            });
+
+            // 3. Render Map
+            const svg = d3.select("#map-container").append("svg")
+                .attr("viewBox", "0 0 975 610")
+                .style("width", "100%")
+                .style("height", "100%");
+
+            try {
+                // Fetch US topology (standard D3 atlas)
+                const us = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json");
+                const path = d3.geoPath();
+
+                const g = svg.append("g");
+
+                // Draw States
+                g.selectAll("path")
+                    .data(topojson.feature(us, us.objects.states).features)
+                    .enter().append("path")
+                    .attr("d", path)
+                    .attr("class", "state")
+                    .attr("id", d => `state-${d.id}`)
+                    .on("click", (event, d) => {
+                        const stateId = d.id;
+                        highlightState(stateId);
+                        // Scroll to input
+                        const card = document.getElementById(`card-${stateId}`);
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        document.getElementById(`input-state-${stateId}`).focus();
+                    });
+
+                // Add Numbers to Map
+                g.selectAll("text")
+                    .data(topojson.feature(us, us.objects.states).features)
+                    .enter().append("text")
+                    .attr("class", "state-label")
+                    .attr("transform", d => {
+                        // Centroid calculation for text placement
+                        const centroid = path.centroid(d);
+                        // Adjustments for small states/crowded areas could go here
+                        return `translate(${centroid[0]},${centroid[1]})`;
+                    })
+                    .attr("id", d => `label-${d.id}`)
+                    .text(d => {
+                        const quizItem = quizData.find(q => q.id === d.id);
+                        return quizItem ? quizItem.quizNumber : "";
+                    });
+
+            } catch (error) {
+                document.getElementById('map-container').innerHTML = `<p style="padding:20px; color:red">Error loading map data. Please ensure you are connected to the internet.</p>`;
+                console.error(error);
+            }
+        }
+
+        // Interaction Logic
+        function highlightState(id) {
+            // Remove active class from all
+            d3.selectAll(".state").classed("active", false);
+            d3.selectAll(".state-label").classed("active", false);
+            document.querySelectorAll(".question-card").forEach(el => el.classList.remove("active"));
+
+            // Add active to current
+            d3.select(`#state-${id}`).classed("active", true);
+            d3.select(`#label-${id}`).classed("active", true);
+            
+            const card = document.getElementById(`card-${id}`);
+            if(card) card.classList.add("active");
+        }
+
+        // Validation Logic
+        function checkAnswers() {
+            let score = 0;
+            
+            quizData.forEach(item => {
+                const stateInput = document.getElementById(`input-state-${item.id}`);
+                const capInput = document.getElementById(`input-cap-${item.id}`);
+                const card = document.getElementById(`card-${item.id}`);
+                const statePath = d3.select(`#state-${item.id}`);
+
+                const stateCorrect = stateInput.value.trim().toLowerCase() === item.name.toLowerCase();
+                const capCorrect = capInput.value.trim().toLowerCase() === item.capital.toLowerCase();
+
+                // Visual Styling for Inputs
+                stateInput.className = stateCorrect ? 'correct' : 'incorrect';
+                capInput.className = capCorrect ? 'correct' : 'incorrect';
+
+                // Map Styling
+                if (stateCorrect && capCorrect) {
+                    statePath.classed("correct", true).classed("incorrect", false);
+                    score++;
+                } else {
+                    statePath.classed("incorrect", true).classed("correct", false);
+                    card.classList.add("show-key"); // Reveal answer
+                }
+            });
+
+            alert(`You got ${score} out of 50 correct!`);
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>
