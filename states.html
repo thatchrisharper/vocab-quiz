@@ -20,16 +20,15 @@
             margin: 0 auto;
             padding: 20px;
             background-color: var(--bg);
-            /* Better touch handling for iPad */
             touch-action: manipulation; 
         }
 
         h1 { text-align: center; color: #1e293b; margin-bottom: 5px; }
         
-        /* Map Container - Locked Aspect Ratio */
-        #map-container {
-            width: 100%;
+        /* Map Container */
+        #map-wrapper {
             position: relative;
+            width: 100%;
             background: white;
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
@@ -38,7 +37,7 @@
             overflow: hidden;
         }
 
-        /* Responsive SVG logic */
+        /* Responsive SVG Logic */
         svg {
             display: block;
             width: 100%;
@@ -53,7 +52,7 @@
             transition: fill 0.2s;
         }
 
-        /* Active state (when input is focused) */
+        /* Active state */
         .state.active { 
             fill: var(--primary); 
             stroke: #1e40af;
@@ -126,15 +125,11 @@
             border: 1px solid #cbd5e1;
             border-radius: 4px;
             width: 100%;
-            font-size: 16px; /* Prevents zoom on iPad input focus */
-            -webkit-appearance: none; /* Removes iPad internal styling */
+            font-size: 16px; /* Prevents zoom on iPad */
+            -webkit-appearance: none;
         }
 
-        input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
+        input:focus { outline: none; border-color: var(--primary); }
         input.correct { border-color: var(--success); background-color: #f0fdf4; }
         input.incorrect { border-color: var(--error); background-color: #fef2f2; }
 
@@ -163,13 +158,16 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            transition: background 0.2s;
             -webkit-tap-highlight-color: transparent;
         }
 
-        button:hover { background-color: #1d4ed8; }
-        button#reset { background-color: #64748b; }
-
+        #loading-msg {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            color: #64748b;
+        }
     </style>
 </head>
 <body>
@@ -179,17 +177,19 @@
         Tap a box below to find the state on the map!
     </p>
 
-    <div id="map-container"></div>
+    <div id="map-wrapper">
+        <div id="loading-msg">Loading Map...</div>
+    </div>
 
     <div id="quiz-form"></div>
 
     <div id="controls">
         <button onclick="checkAnswers()">Check Answers</button>
-        <button id="reset" onclick="location.reload()">New Quiz</button>
+        <button id="reset" onclick="location.reload()" style="background-color: #64748b;">New Quiz</button>
     </div>
 
     <script>
-        // Data matching State Names to Official Map IDs (FIPS codes)
+        // Data matching FIPS IDs
         const statesData = [
             { id: "01", name: "Alabama", capital: "Montgomery" },
             { id: "02", name: "Alaska", capital: "Juneau" },
@@ -255,14 +255,12 @@
 
         async function init() {
             // 1. Setup Quiz Data
-            const shuffledStates = shuffle([...statesData]);
-            
-            quizData = shuffledStates.map((state, index) => ({
+            quizData = shuffle([...statesData]).map((state, index) => ({
                 ...state,
                 quizNumber: index + 1
             }));
 
-            // 2. Render Forms (Input Side)
+            // 2. Render Forms
             const formContainer = document.getElementById('quiz-form');
             quizData.sort((a,b) => a.quizNumber - b.quizNumber).forEach(item => {
                 const div = document.createElement('div');
@@ -280,17 +278,19 @@
             });
 
             // 3. Render Map
-            // We use the standard 975x610 viewbox for Albers USA
-            const svg = d3.select("#map-container").append("svg")
+            const svg = d3.select("#map-wrapper").append("svg")
                 .attr("viewBox", "0 0 975 610")
                 .attr("preserveAspectRatio", "xMidYMid meet");
 
             try {
-                // Fetch the Standard US TopoJSON Atlas (High reliability)
-                const us = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json");
+                // Fetch PRE-PROJECTED Albers USA Map (No math required)
+                // This file is already in pixels (975x610), not GPS coordinates.
+                const us = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-albers-10m.json");
                 
-                // Define the path generator
-                const path = d3.geoPath(); 
+                document.getElementById('loading-msg').style.display = 'none';
+
+                // Pass null projection because data is already projected
+                const path = d3.geoPath(null);
 
                 const g = svg.append("g");
 
@@ -309,15 +309,17 @@
                     .attr("class", "state-label")
                     .attr("transform", d => {
                         const centroid = path.centroid(d);
-                        // Filter out empty paths
                         if (!centroid[0]) return "translate(-100,-100)"; 
                         
-                        // Adjustments for small states to prevent overlapping
+                        // Adjustments for crowded East Coast
                         let [x, y] = centroid;
-                        // Manual tweaks for crowded East Coast
-                        if (d.id === "10") { x += 15; y += 5; } // Delaware
-                        if (d.id === "44") { x += 10; y += 10; } // Rhode Island
-                        if (d.id === "11") { y += 5; } // DC
+                        const id = d.id;
+                        // Manual tweaks to ensure visibility
+                        if (id === "10") { x += 22; y += 4; } // DE
+                        if (id === "44") { x += 12; y += 12; } // RI
+                        if (id === "11") { y += 15; } // DC
+                        if (id === "24") { x += 10; y -= 10; } // MD
+                        if (id === "34") { x += 15; } // NJ
                         
                         return `translate(${x},${y})`;
                     })
@@ -328,22 +330,18 @@
                     });
 
             } catch (error) {
-                document.getElementById('map-container').innerHTML = `
-                    <div style="padding:40px; text-align:center; color:#ef4444;">
-                        <h3>⚠️ Map Loading Error</h3>
-                        <p>Please check your internet connection and refresh.</p>
-                        <p style="font-size:12px; color:#64748b;">${error.message}</p>
-                    </div>`;
+                document.getElementById('loading-msg').innerHTML = `
+                    <span style="color:red">Error loading map.<br>
+                    Please try a different browser or check internet.</span><br>
+                    <small>${error.message}</small>`;
             }
         }
 
         // Interaction: Input -> Map
         function highlightState(id) {
-            // Clear previous
             d3.selectAll(".state").classed("active", false);
             d3.selectAll(".state-label").classed("active", false);
 
-            // Activate new
             d3.select(`#state-${id}`).classed("active", true);
             d3.select(`#label-${id}`).classed("active", true);
         }
@@ -351,7 +349,6 @@
         // Validation
         function checkAnswers() {
             let score = 0;
-            
             quizData.forEach(item => {
                 const stateInput = document.getElementById(`input-state-${item.id}`);
                 const capInput = document.getElementById(`input-cap-${item.id}`);
@@ -363,11 +360,9 @@
                 const stateCorrect = stateInput.value.trim().toLowerCase() === item.name.toLowerCase();
                 const capCorrect = capInput.value.trim().toLowerCase() === item.capital.toLowerCase();
 
-                // Style Inputs
                 stateInput.className = stateCorrect ? 'correct' : 'incorrect';
                 capInput.className = capCorrect ? 'correct' : 'incorrect';
 
-                // Style Map & Score
                 if (stateCorrect && capCorrect) {
                     statePath.classed("correct", true).classed("incorrect", false);
                     score++;
@@ -376,7 +371,6 @@
                     card.classList.add("show-key");
                 }
             });
-
             window.scrollTo({ top: 0, behavior: 'smooth' });
             alert(`You got ${score} out of 50 correct!`);
         }
