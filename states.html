@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>US States & Capitals Quiz</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://unpkg.com/topojson@3"></script>
@@ -10,7 +10,7 @@
         :root {
             --primary: #2563eb;
             --success: #22c55e;
-            --warning: #f59e0b; /* Yellow for partial credit */
+            --warning: #f59e0b;
             --error: #ef4444;
             --bg: #f8fafc;
         }
@@ -21,7 +21,9 @@
             margin: 0 auto;
             padding: 20px;
             background-color: var(--bg);
+            /* Disables pull-to-refresh and zoom on iPad for an app-like feel */
             touch-action: manipulation; 
+            overscroll-behavior: none;
         }
 
         h1 { text-align: center; color: #1e293b; margin-bottom: 5px; }
@@ -57,9 +59,8 @@
             stroke: #1e40af;
         }
         
-        /* Map Coloring Logic */
         .state.correct { fill: var(--success); }
-        .state.partial { fill: var(--warning); } /* Shows yellow on map if answer was partial */
+        .state.partial { fill: var(--warning); }
         .state.incorrect { fill: var(--error); }
 
         .state-label {
@@ -122,15 +123,15 @@
             border: 1px solid #cbd5e1;
             border-radius: 4px;
             width: 100%;
-            font-size: 16px;
+            font-size: 16px; /* Prevents auto-zoom on iPad */
             -webkit-appearance: none;
+            background-color: white;
         }
 
         input:focus { outline: none; border-color: var(--primary); }
         
-        /* Scoring Colors */
         input.correct { border-color: var(--success); background-color: #f0fdf4; }
-        input.partial { border-color: var(--warning); background-color: #fffbeb; } /* Yellow background */
+        input.partial { border-color: var(--warning); background-color: #fffbeb; }
         input.incorrect { border-color: var(--error); background-color: #fef2f2; }
 
         .answer-key {
@@ -253,7 +254,6 @@
             return array;
         }
 
-        // Levenshtein Distance for spell checking
         function getEditDistance(a, b) {
             if(a.length === 0) return b.length; 
             if(b.length === 0) return a.length; 
@@ -285,11 +285,16 @@
                 const div = document.createElement('div');
                 div.className = 'question-card';
                 div.id = `card-${item.id}`;
+                // ADDED: autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
                 div.innerHTML = `
                     <div class="number-badge">${item.quizNumber}</div>
                     <div class="inputs">
-                        <input type="text" placeholder="State" id="input-state-${item.id}" onfocus="highlightState('${item.id}')">
-                        <input type="text" placeholder="Capital" id="input-cap-${item.id}" onfocus="highlightState('${item.id}')">
+                        <input type="text" placeholder="State" id="input-state-${item.id}" 
+                               onfocus="highlightState('${item.id}')"
+                               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                        <input type="text" placeholder="Capital" id="input-cap-${item.id}" 
+                               onfocus="highlightState('${item.id}')"
+                               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                         <div class="answer-key">Correct: <b>${item.name}</b>, <b>${item.capital}</b></div>
                     </div>
                 `;
@@ -351,17 +356,14 @@
             const val = inputVal.trim().toLowerCase();
             const correct = correctVal.toLowerCase();
             
-            if (val === correct) return 1; // Exact match
-            if (val.length === 0) return 0; // Empty
+            if (val === correct) return 1; 
+            if (val.length === 0) return 0; 
 
-            // Calculate typos
             const dist = getEditDistance(val, correct);
-            
-            // Allow 1 typo for short words (<5 chars), 2 typos for long words
             const threshold = correct.length < 5 ? 1 : 2;
             
-            if (dist <= threshold) return 0.5; // Partial credit
-            return 0; // Wrong
+            if (dist <= threshold) return 0.5; 
+            return 0; 
         }
 
         function checkAnswers() {
@@ -373,18 +375,12 @@
                 const card = document.getElementById(`card-${item.id}`);
                 const statePath = d3.select(`#state-${item.id}`);
 
-                // Calculate individual points
                 const statePoints = gradeInput(stateInput.value, item.name);
                 const capPoints = gradeInput(capInput.value, item.capital);
 
-                // Apply CSS Classes based on score
                 stateInput.className = statePoints === 1 ? 'correct' : (statePoints === 0.5 ? 'partial' : 'incorrect');
                 capInput.className = capPoints === 1 ? 'correct' : (capPoints === 0.5 ? 'partial' : 'incorrect');
 
-                // Map Coloring Logic:
-                // Green if both perfect (2pts)
-                // Yellow if partially correct (>= 1pt total)
-                // Red if mostly wrong (< 1pt total)
                 const itemTotal = statePoints + capPoints;
                 statePath.classed("correct", false).classed("partial", false).classed("incorrect", false);
                 
