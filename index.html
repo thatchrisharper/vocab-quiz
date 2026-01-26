@@ -59,7 +59,6 @@
 </div>
 
 <script>
-    // 1. Global Variables
     let vocab = [];
     let selectedWordEl = null;
     const matches = new Map(); 
@@ -74,8 +73,8 @@
             const response = await fetch(sheetUrl);
             const text = await response.text();
             
-            // CSV Parser
-            const rows = text.split('\n');
+            // CSV Parser - .slice(1) skips the header row
+            const rows = text.split('\n').slice(1); 
             vocab = rows.map(row => {
                 const columns = row.match(/(".*?"|[^",\n]+)(?=\s*,|\s*\n|$)/g);
                 if (columns && columns.length >= 2) {
@@ -99,7 +98,6 @@
         }
     }
 
-    // 4. Setup Game UI
     function initGame() {
         const bank = document.getElementById('word-bank');
         [...vocab].sort((a,b) => a.w.localeCompare(b.w)).forEach(item => {
@@ -141,7 +139,6 @@
         });
     }
 
-    // 5. Grading Function
     function checkAnswers() {
         let score = 0;
         shuffledDefs.forEach((item, index) => {
@@ -160,7 +157,6 @@
         res.innerHTML = `<h2>Score: ${score} / ${vocab.length}</h2><button onclick="location.reload()" style="padding:10px; border-radius:10px; cursor:pointer;">Restart</button>`;
     }
 
-    // Start the process
     loadVocab();
 </script>
 </body>
