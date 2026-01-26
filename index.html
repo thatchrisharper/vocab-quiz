@@ -47,7 +47,7 @@
 
 <div class="container">
     <h1>Vocab Matcher</h1>
-    <p class="instr" id="status-msg">ing vocabulary list...</p>
+    <p class="instr" id="status-msg">Loading vocabulary list...</p>
 
     <div class="word-bank" id="word-bank"></div>
     <div class="definitions-grid" id="defs-grid"></div>
@@ -59,30 +59,24 @@
 </div>
 
 <script>
+    // 1. Global Variables
     let vocab = [];
     let selectedWordEl = null;
     const matches = new Map(); 
     let shuffledDefs = [];
 
-    // KEY STEP: Fetch the Markdown file
-    async function loadVocab() {
-       let vocab = [];
-    let selectedWordEl = null;
-    const matches = new Map(); 
-    let shuffledDefs = [];
-
-    // PASTE YOUR GOOGLE SHEET CSV URL HERE
+    // 2. Your Google Sheet CSV URL
     const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTWDKLag3VsH9OyYgfd1T10N8-b_siRPU1T5S1-2-FxwHbqQ7cyJvt4ETG3UVCoxhfE1EhIfUIsFzsF/pub?output=csv';
 
+    // 3. Load Data Function
     async function loadVocab() {
         try {
             const response = await fetch(sheetUrl);
             const text = await response.text();
             
-            // Simple CSV Parser (handles words in Col A and definitions in Col B)
+            // CSV Parser
             const rows = text.split('\n');
             vocab = rows.map(row => {
-                // This regex handles definitions that might contain commas
                 const columns = row.match(/(".*?"|[^",\n]+)(?=\s*,|\s*\n|$)/g);
                 if (columns && columns.length >= 2) {
                     return {
@@ -105,11 +99,8 @@
         }
     }
 
-    // ... (Keep the rest of your initGame and checkAnswers functions the same)
-    }
-
+    // 4. Setup Game UI
     function initGame() {
-        // 1. Word Bank
         const bank = document.getElementById('word-bank');
         [...vocab].sort((a,b) => a.w.localeCompare(b.w)).forEach(item => {
             const el = document.createElement('div');
@@ -124,7 +115,6 @@
             bank.appendChild(el);
         });
 
-        // 2. Definitions
         shuffledDefs = [...vocab].sort(() => Math.random() - 0.5);
         const grid = document.getElementById('defs-grid');
         shuffledDefs.forEach((item, index) => {
@@ -151,6 +141,7 @@
         });
     }
 
+    // 5. Grading Function
     function checkAnswers() {
         let score = 0;
         shuffledDefs.forEach((item, index) => {
@@ -169,6 +160,7 @@
         res.innerHTML = `<h2>Score: ${score} / ${vocab.length}</h2><button onclick="location.reload()" style="padding:10px; border-radius:10px; cursor:pointer;">Restart</button>`;
     }
 
+    // Start the process
     loadVocab();
 </script>
 </body>
