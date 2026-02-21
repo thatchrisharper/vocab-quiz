@@ -70,20 +70,33 @@
     // Google Sheet CSV URL (Includes the skip-header fix)
     const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTWDKLag3VsH9OyYgfd1T10N8-b_siRPU1T5S1-2-FxwHbqQ7cyJvt4ETG3UVCoxhfE1EhIfUIsFzsF/pub?output=csv';
 
+    // 3. Load Data Function
     async function loadVocab() {
         try {
             const response = await fetch(sheetUrl);
             const text = await response.text();
             
-            // .slice(1) ignores the first header row of the spreadsheet
+            // Skip the header row
             const rows = text.split('\n').slice(1); 
+            
             vocab = rows.map(row => {
-                const columns = row.match(/(".*?"|[^",\n]+)(?=\s*,|\s*\n|$)/g);
-                if (columns && columns.length >= 2) {
-                    return {
-                        w: columns[0].replace(/"/g, '').trim(), 
-                        d: columns[1].replace(/"/g, '').trim()
-                    };
+                const firstComma = row.indexOf(',');
+                if (firstComma > 0) {
+                    // Everything before the first comma is the word
+                    let word = row.substring(0, firstComma).replace(/(^"|"$)/g, '').trim();
+                    
+                    // Everything after the first comma is the definition
+                    let def = row.substring(firstComma + 1).trim();
+                    
+                    // Google Sheets wraps definitions with commas in double-quotes (""). 
+                    // We need to strip those off so they don't show up on the screen.
+                    if (def.startsWith('"') && def.endsWith('"')) {
+                        def = def.slice(1, -1);
+                    }
+                    // Fix standard CSV quote escaping
+                    def = def.replace(/""/g, '"');
+                    
+                    return { w: word, d: def };
                 }
                 return null;
             }).filter(item => item !== null && item.w !== "");
