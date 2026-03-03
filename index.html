@@ -43,6 +43,13 @@
         .controls { text-align: center; margin-top: 25px; }
         #submit-btn { background: var(--success); color: white; border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: bold; font-size: 1em;}
         
+        #set-selector-wrap { text-align: center; margin-bottom: 15px; }
+        #set-selector-wrap label { font-weight: 600; color: #555; margin-right: 8px; }
+        #set-selector {
+            font-family: inherit; font-size: 0.95em; padding: 6px 10px;
+            border: 2px solid var(--primary); border-radius: 6px; color: #333;
+            background: white; cursor: pointer;
+        }
         @media (max-width: 600px) { .definitions-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -51,6 +58,11 @@
 <div class="container">
     <h1>Vocab Matcher</h1>
     <p class="instr" id="status-msg">Loading vocabulary list...</p>
+
+    <div id="set-selector-wrap">
+        <label for="set-selector">Vocab set:</label>
+        <select id="set-selector"></select>
+    </div>
 
     <div class="word-bank" id="word-bank"></div>
     <div class="definitions-grid" id="defs-grid"></div>
@@ -64,16 +76,34 @@
 <script>
     let vocab = [];
     let selectedWordEl = null;
-    const matches = new Map(); 
+    let matches = new Map();
     let shuffledDefs = [];
 
-    // Google Sheet CSV URL (Includes the skip-header fix)
-    const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTWDKLag3VsH9OyYgfd1T10N8-b_siRPU1T5S1-2-FxwHbqQ7cyJvt4ETG3UVCoxhfE1EhIfUIsFzsF/pub?output=csv';
+    const BASE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTWDKLag3VsH9OyYgfd1T10N8-b_siRPU1T5S1-2-FxwHbqQ7cyJvt4ETG3UVCoxhfE1EhIfUIsFzsF/pub?output=csv&gid=';
+    const VOCAB_SETS = [
+        { name: "List 1", gid: "0" },
+        { name: "List 2", gid: "954345670" },
+    ];
 
-    // 3. Load Data Function
-    async function loadVocab() {
+    const sel = document.getElementById('set-selector');
+    VOCAB_SETS.forEach((s, i) => {
+        const opt = document.createElement('option');
+        opt.value = s.gid;
+        opt.textContent = s.name;
+        sel.appendChild(opt);
+    });
+    sel.addEventListener('change', () => loadVocab(sel.value));
+
+    async function loadVocab(gid) {
+        vocab = []; matches = new Map(); selectedWordEl = null;
+        document.getElementById('word-bank').innerHTML = '';
+        document.getElementById('defs-grid').innerHTML = '';
+        document.getElementById('results').innerHTML = '';
+        document.getElementById('submit-btn').style.display = 'none';
+        document.getElementById('status-msg').innerText = 'Loading...';
+
         try {
-            const response = await fetch(sheetUrl);
+            const response = await fetch(BASE_URL + gid);
             const text = await response.text();
             
             // Skip the header row
@@ -172,7 +202,7 @@
         res.innerHTML = `<h2>Score: ${score} / ${vocab.length}</h2><button onclick="location.reload()" style="padding:10px 20px; border-radius:15px; cursor:pointer; background: var(--primary); color: white; border: none;">Restart</button>`;
     }
 
-    loadVocab();
+    loadVocab(VOCAB_SETS[0].gid);
 </script>
 </body>
 </html>
