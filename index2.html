@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocab Matcher</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #F5F4F0;
+            --panel-bg: #FFFFFF;
+            --text: #111827;
+            --text-muted: #6B7280;
+            --accent: #2355C3;
+            --accent-light: #EFF3FD;
+            --success: #059669;
+            --success-light: #ECFDF5;
+            --error: #DC2626;
+            --error-light: #FEF2F2;
+            --border: #E5E4DF;
+            --used-opacity: 0.25;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Figtree', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── Header ── */
+        .app-header {
+            height: 64px;
+            min-height: 64px;
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 16px;
+            z-index: 10;
+        }
+
+        .app-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.45rem;
+            font-weight: 400;
+            color: var(--text);
+            flex-shrink: 0;
+        }
+
+        .header-spacer { flex: 1; }
+
+        #set-selector {
+            font-family: 'Figtree', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 7px 32px 7px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+            color: var(--text);
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        #set-selector:focus { border-color: var(--accent); }
+
+        #status-msg {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        /* ── Main body ── */
+        .app-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ── Left panel (word list) ── */
+        .panel-words {
+            width: 280px;
+            min-width: 280px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 16px 20px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .word-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .word-pill {
+            display: flex;
+            align-items: center;
+            min-height: 56px;
+            padding: 12px 16px;
+            background: var(--bg);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Figtree', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            transition: background 0.12s, border-color 0.12s, color 0.12s;
+            text-align: left;
+            outline: none;
+            width: 100%;
+        }
+        .word-pill:hover:not(.used) {
+            background: var(--accent-light);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .word-pill:active:not(.used) {
+            transform: scale(0.97);
+        }
+        .word-pill.selected {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+        .word-pill.used {
+            opacity: var(--used-opacity);
+            pointer-events: none;
+        }
+
+        .submit-area {
+            padding: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        #submit-btn {
+            display: none;
+            width: 100%;
+            min-height: 52px;
+            background: var(--success);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Figtree', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            outline: none;
+        }
+        #submit-btn:hover { background: #047857; }
+        #submit-btn:active { transform: scale(0.98); }
+
+        /* ── Right panel (definitions) ── */
+        .panel-defs {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-defs .panel-label {
+            border-left: none;
+        }
+
+        .defs-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .definitions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .def-card {
+            background: var(--panel-bg);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            min-height: 80px;
+            padding: 16px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+            animation: fadeUp 0.3s ease both;
+        }
+        .def-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(35,85,195,0.1);
+            transform: translateY(-2px);
+        }
+        .def-card:active {
+            transform: scale(0.98) translateY(0);
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%   { box-shadow: 0 0 0 0 rgba(35,85,195,0.35); }
+            60%  { box-shadow: 0 0 0 8px rgba(35,85,195,0); }
+            100% { box-shadow: 0 0 0 0 rgba(35,85,195,0); }
+        }
+
+        .def-card.just-matched {
+            animation: pulse 0.5s ease;
+        }
+
+        .def-text {
+            font-size: 0.9rem;
+            line-height: 1.45;
+            color: var(--text);
+        }
+
+        .matched-word {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* Result states */
+        .correct-card {
+            border-color: var(--success) !important;
+            background: var(--success-light) !important;
+        }
+        .wrong-card {
+            border-color: var(--error) !important;
+            background: var(--error-light) !important;
+        }
+
+        .result-label {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .result-label.correct { color: var(--success); }
+        .result-label.wrong   { color: var(--error); }
+
+        /* Score banner (shows inside results area) */
+        #results {
+            padding: 0 16px 16px;
+        }
+
+        .score-banner {
+            background: var(--panel-bg);
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .score-number {
+            font-family: 'DM Serif Display', serif;
+            font-size: 2.2rem;
+            color: var(--text);
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .restart-btn {
+            margin-left: auto;
+            padding: 10px 22px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Figtree', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .restart-btn:hover { background: #1a42a0; }
+
+        /* Staggered animation for def cards */
+        .definitions-grid .def-card:nth-child(1)  { animation-delay: 0.03s; }
+        .definitions-grid .def-card:nth-child(2)  { animation-delay: 0.06s; }
+        .definitions-grid .def-card:nth-child(3)  { animation-delay: 0.09s; }
+        .definitions-grid .def-card:nth-child(4)  { animation-delay: 0.12s; }
+        .definitions-grid .def-card:nth-child(5)  { animation-delay: 0.15s; }
+        .definitions-grid .def-card:nth-child(6)  { animation-delay: 0.18s; }
+        .definitions-grid .def-card:nth-child(7)  { animation-delay: 0.21s; }
+        .definitions-grid .def-card:nth-child(8)  { animation-delay: 0.24s; }
+        .definitions-grid .def-card:nth-child(9)  { animation-delay: 0.27s; }
+        .definitions-grid .def-card:nth-child(10) { animation-delay: 0.30s; }
+        .definitions-grid .def-card:nth-child(11) { animation-delay: 0.33s; }
+        .definitions-grid .def-card:nth-child(12) { animation-delay: 0.36s; }
+        .definitions-grid .def-card:nth-child(13) { animation-delay: 0.39s; }
+        .definitions-grid .def-card:nth-child(14) { animation-delay: 0.42s; }
+        .definitions-grid .def-card:nth-child(15) { animation-delay: 0.45s; }
+        .definitions-grid .def-card:nth-child(16) { animation-delay: 0.48s; }
+
+        /* Scrollbar polish */
+        .word-list::-webkit-scrollbar,
+        .defs-scroll::-webkit-scrollbar { width: 6px; }
+        .word-list::-webkit-scrollbar-track,
+        .defs-scroll::-webkit-scrollbar-track { background: transparent; }
+        .word-list::-webkit-scrollbar-thumb,
+        .defs-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="app-header">
+    <span class="app-title">Vocab Matcher</span>
+    <div class="header-spacer"></div>
+    <select id="set-selector"></select>
+    <span id="status-msg">Loading…</span>
+</header>
+
+<!-- Main -->
+<div class="app-body">
+
+    <!-- Left: words -->
+    <div class="panel-words">
+        <div class="panel-label">Words</div>
+        <div class="word-list" id="word-bank"></div>
+        <div class="submit-area">
+            <button id="submit-btn" onclick="checkAnswers()">Submit Quiz</button>
+        </div>
+    </div>
+
+    <!-- Right: definitions -->
+    <div class="panel-defs">
+        <div class="panel-label">Definitions</div>
+        <div class="defs-scroll">
+            <div class="definitions-grid" id="defs-grid"></div>
+        </div>
+        <div id="results"></div>
+    </div>
+
+</div>
+
+<script>
+    let vocab = [];
+    let selectedWordEl = null;
+    let matches = new Map();
+    let shuffledDefs = [];
+
+    const BASE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTWDKLag3VsH9OyYgfd1T10N8-b_siRPU1T5S1-2-FxwHbqQ7cyJvt4ETG3UVCoxhfE1EhIfUIsFzsF/pub?output=csv&gid=';
+    const VOCAB_SETS = [
+        { name: "List 1", gid: "0" },
+        { name: "List 2", gid: "954345670" },
+    ];
+
+    const sel = document.getElementById('set-selector');
+    VOCAB_SETS.forEach((s) => {
+        const opt = document.createElement('option');
+        opt.value = s.gid;
+        opt.textContent = s.name;
+        sel.appendChild(opt);
+    });
+    sel.addEventListener('change', () => loadVocab(sel.value));
+
+    async function loadVocab(gid) {
+        vocab = []; matches = new Map(); selectedWordEl = null;
+        document.getElementById('word-bank').innerHTML = '';
+        document.getElementById('defs-grid').innerHTML = '';
+        document.getElementById('results').innerHTML = '';
+        document.getElementById('submit-btn').style.display = 'none';
+        document.getElementById('status-msg').innerText = 'Loading…';
+
+        try {
+            const response = await fetch(BASE_URL + gid);
+            const text = await response.text();
+
+            const rows = text.split('\n').slice(1);
+
+            vocab = rows.map(row => {
+                const firstComma = row.indexOf(',');
+                if (firstComma > 0) {
+                    let word = row.substring(0, firstComma).replace(/(^"|"$)/g, '').trim();
+                    let def = row.substring(firstComma + 1).trim();
+                    if (def.startsWith('"') && def.endsWith('"')) {
+                        def = def.slice(1, -1);
+                    }
+                    def = def.replace(/""/g, '"');
+                    return { w: word, d: def };
+                }
+                return null;
+            }).filter(item => item !== null && item.w !== "");
+
+            if (vocab.length > 0) {
+                document.getElementById('status-msg').innerText = "Select a word, then its definition.";
+                document.getElementById('submit-btn').style.display = 'block';
+                initGame();
+            } else {
+                document.getElementById('status-msg').innerText = "Error: No data found in sheet.";
+            }
+        } catch (err) {
+            document.getElementById('status-msg').innerText = "Error loading sheet.";
+        }
+    }
+
+    function initGame() {
+        const bank = document.getElementById('word-bank');
+        [...vocab].sort((a, b) => a.w.localeCompare(b.w)).forEach(item => {
+            const el = document.createElement('button');
+            el.className = 'word-pill';
+            el.innerText = item.w;
+            el.id = `word-${item.w}`;
+            el.onclick = () => {
+                if (selectedWordEl) selectedWordEl.classList.remove('selected');
+                selectedWordEl = el;
+                el.classList.add('selected');
+            };
+            bank.appendChild(el);
+        });
+
+        shuffledDefs = [...vocab].sort(() => Math.random() - 0.5);
+        const grid = document.getElementById('defs-grid');
+        shuffledDefs.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = 'def-card';
+            card.id = `def-${index}`;
+            card.innerHTML = `<div class="def-text">${item.d}</div><div class="matched-word" id="match-label-${index}"></div>`;
+            card.onclick = () => {
+                if (matches.has(index)) {
+                    // Un-match: clicking an already-matched card clears it
+                    const oldWord = matches.get(index);
+                    document.getElementById(`word-${oldWord}`).classList.remove('used');
+                    matches.delete(index);
+                    document.getElementById(`match-label-${index}`).innerText = "";
+                } else if (selectedWordEl) {
+                    const word = selectedWordEl.innerText;
+                    matches.set(index, word);
+                    document.getElementById(`match-label-${index}`).innerText = "→ " + word;
+                    selectedWordEl.classList.add('used');
+                    selectedWordEl.classList.remove('selected');
+                    selectedWordEl = null;
+                    // Pulse animation
+                    card.classList.remove('just-matched');
+                    void card.offsetWidth; // reflow
+                    card.classList.add('just-matched');
+                }
+            };
+            grid.appendChild(card);
+        });
+    }
+
+    function checkAnswers() {
+        let score = 0;
+        shuffledDefs.forEach((item, index) => {
+            const card = document.getElementById(`def-${index}`);
+            const userWord = matches.get(index);
+            const labelEl = document.getElementById(`match-label-${index}`);
+            if (userWord === item.w) {
+                score++;
+                card.classList.add('correct-card');
+                card.insertAdjacentHTML('beforeend', `<div class="result-label correct">✓ Correct</div>`);
+            } else {
+                card.classList.add('wrong-card');
+                card.insertAdjacentHTML('beforeend', `<div class="result-label wrong">✗ ${item.w}</div>`);
+            }
+        });
+
+        document.getElementById('submit-btn').style.display = 'none';
+        document.getElementById('status-msg').innerText = `${score} / ${vocab.length} correct`;
+
+        const res = document.getElementById('results');
+        res.innerHTML = `
+            <div class="score-banner">
+                <div>
+                    <div class="score-number">${score} / ${vocab.length}</div>
+                    <div class="score-label">words matched correctly</div>
+                </div>
+                <button class="restart-btn" onclick="location.reload()">Try Again</button>
+            </div>`;
+    }
+
+    loadVocab(VOCAB_SETS[0].gid);
+</script>
+</body>
+</html>
