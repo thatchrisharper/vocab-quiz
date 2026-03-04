@@ -9,17 +9,30 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #F5F4F0;
-            --panel-bg: #FFFFFF;
-            --text: #111827;
-            --text-muted: #6B7280;
-            --accent: #2355C3;
-            --accent-light: #EFF3FD;
-            --success: #059669;
-            --success-light: #ECFDF5;
-            --error: #DC2626;
-            --error-light: #FEF2F2;
-            --border: #E5E4DF;
+            --parchment:   #F5EFE0;
+            --linen:       #EDE7D9;
+            --stone:       #8C8578;
+            --bark:        #4A4239;
+            --sage-mist:   #B7C9A8;
+            --evergreen:   #2D5A3D;
+            --forest-floor:#1E3A2B;
+            --honeyed-gold:#D4A84B;
+            --warm-amber:  #C47D2E;
+            --correct:     #5A9E6F;
+            --try-again:   #C86B5A;
+
+            /* semantic aliases */
+            --bg:           var(--parchment);
+            --panel-bg:     #FFFFFF;
+            --text:         var(--bark);
+            --text-muted:   var(--stone);
+            --accent:       var(--evergreen);
+            --accent-light: rgba(183,201,168,0.35);
+            --success:      var(--correct);
+            --success-light:rgba(90,158,111,0.12);
+            --error:        var(--try-again);
+            --error-light:  rgba(200,107,90,0.12);
+            --border:       var(--linen);
             --used-opacity: 0.25;
         }
 
@@ -39,12 +52,12 @@
         .app-header {
             height: 64px;
             min-height: 64px;
-            background: var(--panel-bg);
-            border-bottom: 1px solid var(--border);
+            background: var(--forest-floor);
+            border-bottom: none;
             display: flex;
             align-items: center;
             padding: 0 24px;
-            gap: 16px;
+            gap: 12px;
             z-index: 10;
         }
 
@@ -52,7 +65,7 @@
             font-family: 'DM Serif Display', serif;
             font-size: 1.45rem;
             font-weight: 400;
-            color: var(--text);
+            color: var(--parchment);
             flex-shrink: 0;
         }
 
@@ -63,21 +76,43 @@
             font-size: 0.9rem;
             font-weight: 500;
             padding: 7px 32px 7px 12px;
-            border: 1.5px solid var(--border);
+            border: 1.5px solid rgba(255,255,255,0.2);
             border-radius: 8px;
-            background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;
-            color: var(--text);
+            background: rgba(255,255,255,0.1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23F5EFE0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+            color: var(--parchment);
             cursor: pointer;
             appearance: none;
             -webkit-appearance: none;
             outline: none;
             transition: border-color 0.15s;
         }
-        #set-selector:focus { border-color: var(--accent); }
+        #set-selector:focus { border-color: var(--sage-mist); }
+        #set-selector option { background: var(--forest-floor); color: var(--parchment); }
+
+        #submit-btn {
+            display: none;
+            padding: 7px 18px;
+            height: auto;
+            min-height: unset;
+            width: auto;
+            background: var(--honeyed-gold);
+            color: var(--forest-floor);
+            border: none;
+            border-radius: 8px;
+            font-family: 'Figtree', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            outline: none;
+            white-space: nowrap;
+        }
+        #submit-btn:hover { background: var(--warm-amber); }
+        #submit-btn:active { transform: scale(0.97); }
 
         #status-msg {
             font-size: 0.875rem;
-            color: var(--text-muted);
+            color: var(--sage-mist);
             font-weight: 500;
             white-space: nowrap;
         }
@@ -139,44 +174,21 @@
         }
         .word-pill:hover:not(.used) {
             background: var(--accent-light);
-            border-color: var(--accent);
-            color: var(--accent);
+            border-color: var(--evergreen);
+            color: var(--evergreen);
         }
         .word-pill:active:not(.used) {
             transform: scale(0.97);
         }
         .word-pill.selected {
-            background: var(--accent);
-            border-color: var(--accent);
+            background: var(--evergreen);
+            border-color: var(--evergreen);
             color: #fff;
         }
         .word-pill.used {
             opacity: var(--used-opacity);
             pointer-events: none;
         }
-
-        .submit-area {
-            padding: 16px;
-            border-top: 1px solid var(--border);
-        }
-
-        #submit-btn {
-            display: none;
-            width: 100%;
-            min-height: 52px;
-            background: var(--success);
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            font-family: 'Figtree', sans-serif;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.15s, transform 0.1s;
-            outline: none;
-        }
-        #submit-btn:hover { background: #047857; }
-        #submit-btn:active { transform: scale(0.98); }
 
         /* ── Right panel (definitions) ── */
         .panel-defs {
@@ -216,8 +228,8 @@
             animation: fadeUp 0.3s ease both;
         }
         .def-card:hover {
-            border-color: var(--accent);
-            box-shadow: 0 4px 12px rgba(35,85,195,0.1);
+            border-color: var(--evergreen);
+            box-shadow: 0 4px 12px rgba(45,90,61,0.12);
             transform: translateY(-2px);
         }
         .def-card:active {
@@ -230,9 +242,9 @@
         }
 
         @keyframes pulse {
-            0%   { box-shadow: 0 0 0 0 rgba(35,85,195,0.35); }
-            60%  { box-shadow: 0 0 0 8px rgba(35,85,195,0); }
-            100% { box-shadow: 0 0 0 0 rgba(35,85,195,0); }
+            0%   { box-shadow: 0 0 0 0 rgba(45,90,61,0.4); }
+            60%  { box-shadow: 0 0 0 8px rgba(45,90,61,0); }
+            100% { box-shadow: 0 0 0 0 rgba(45,90,61,0); }
         }
 
         .def-card.just-matched {
@@ -249,7 +261,7 @@
             margin-top: 10px;
             font-size: 0.8rem;
             font-weight: 700;
-            color: var(--accent);
+            color: var(--evergreen);
         }
 
         /* Result states */
@@ -267,8 +279,8 @@
             font-size: 0.8rem;
             font-weight: 700;
         }
-        .result-label.correct { color: var(--success); }
-        .result-label.wrong   { color: var(--error); }
+        .result-label.correct { color: var(--correct); }
+        .result-label.wrong   { color: var(--try-again); }
 
         /* Score banner (shows inside results area) */
         #results {
@@ -288,18 +300,18 @@
         .score-number {
             font-family: 'DM Serif Display', serif;
             font-size: 2.2rem;
-            color: var(--text);
+            color: var(--bark);
         }
 
         .score-label {
             font-size: 0.9rem;
-            color: var(--text-muted);
+            color: var(--stone);
         }
 
         .restart-btn {
             margin-left: auto;
             padding: 10px 22px;
-            background: var(--accent);
+            background: var(--evergreen);
             color: #fff;
             border: none;
             border-radius: 8px;
@@ -309,7 +321,7 @@
             cursor: pointer;
             transition: background 0.15s;
         }
-        .restart-btn:hover { background: #1a42a0; }
+        .restart-btn:hover { background: var(--forest-floor); }
 
         /* Staggered animation for def cards */
         .definitions-grid .def-card:nth-child(1)  { animation-delay: 0.03s; }
@@ -345,6 +357,7 @@
     <span class="app-title">Vocab Matcher</span>
     <div class="header-spacer"></div>
     <select id="set-selector"></select>
+    <button id="submit-btn" onclick="checkAnswers()">Submit</button>
     <span id="status-msg">Loading…</span>
 </header>
 
@@ -355,9 +368,6 @@
     <div class="panel-words">
         <div class="panel-label">Words</div>
         <div class="word-list" id="word-bank"></div>
-        <div class="submit-area">
-            <button id="submit-btn" onclick="checkAnswers()">Submit Quiz</button>
-        </div>
     </div>
 
     <!-- Right: definitions -->
