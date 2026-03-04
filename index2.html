@@ -141,8 +141,9 @@
             letter-spacing: 0.08em;
             text-transform: uppercase;
             color: var(--text-muted);
-            padding: 16px 20px 12px;
+            padding: 16px 20px 12px 17px;
             border-bottom: 1px solid var(--border);
+            border-left: 3px solid var(--sage-mist);
         }
 
         .word-list {
@@ -173,8 +174,8 @@
             width: 100%;
         }
         .word-pill:hover:not(.used) {
-            background: var(--accent-light);
-            border-color: var(--evergreen);
+            background: rgba(183,201,168,0.5);
+            border-color: var(--sage-mist);
             color: var(--evergreen);
         }
         .word-pill:active:not(.used) {
@@ -198,9 +199,6 @@
             overflow: hidden;
         }
 
-        .panel-defs .panel-label {
-            border-left: none;
-        }
 
         .defs-scroll {
             flex: 1;
@@ -215,7 +213,7 @@
         }
 
         .def-card {
-            background: var(--panel-bg);
+            background: var(--linen);
             border: 1.5px solid var(--border);
             border-radius: 10px;
             min-height: 80px;
@@ -224,10 +222,11 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+            transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
             animation: fadeUp 0.3s ease both;
         }
         .def-card:hover {
+            background: rgba(183,201,168,0.35);
             border-color: var(--evergreen);
             box-shadow: 0 4px 12px rgba(45,90,61,0.12);
             transform: translateY(-2px);
@@ -258,29 +257,50 @@
         }
 
         .matched-word {
+            display: inline-block;
             margin-top: 10px;
-            font-size: 0.8rem;
-            font-weight: 700;
+            background: rgba(183,201,168,0.45);
+            border: 1px solid var(--sage-mist);
             color: var(--evergreen);
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
         }
 
         /* Result states */
         .correct-card {
-            border-color: var(--success) !important;
-            background: var(--success-light) !important;
+            border-color: var(--correct) !important;
+            background: rgba(90,158,111,0.14) !important;
+        }
+        .correct-card .matched-word {
+            background: rgba(90,158,111,0.2);
+            border-color: var(--correct);
+            color: var(--correct);
         }
         .wrong-card {
-            border-color: var(--error) !important;
-            background: var(--error-light) !important;
+            border-color: var(--try-again) !important;
+            background: rgba(200,107,90,0.12) !important;
+        }
+        .wrong-card .matched-word {
+            text-decoration: line-through;
+            opacity: 0.55;
+            background: rgba(200,107,90,0.15);
+            border-color: var(--try-again);
+            color: var(--try-again);
         }
 
         .result-label {
+            display: inline-block;
             margin-top: 8px;
-            font-size: 0.8rem;
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: 0.75rem;
             font-weight: 700;
+            letter-spacing: 0.02em;
         }
-        .result-label.correct { color: var(--correct); }
-        .result-label.wrong   { color: var(--try-again); }
+        .result-label.correct { background: var(--correct); color: #fff; }
+        .result-label.wrong   { background: var(--try-again); color: #fff; }
 
         /* Score banner (shows inside results area) */
         #results {
@@ -288,10 +308,10 @@
         }
 
         .score-banner {
-            background: var(--panel-bg);
-            border: 1.5px solid var(--border);
-            border-radius: 12px;
-            padding: 20px 24px;
+            background: linear-gradient(135deg, var(--evergreen) 0%, var(--forest-floor) 100%);
+            border: none;
+            border-radius: 14px;
+            padding: 24px;
             display: flex;
             align-items: center;
             gap: 20px;
@@ -300,19 +320,19 @@
         .score-number {
             font-family: 'DM Serif Display', serif;
             font-size: 2.2rem;
-            color: var(--bark);
+            color: var(--parchment);
         }
 
         .score-label {
             font-size: 0.9rem;
-            color: var(--stone);
+            color: var(--sage-mist);
         }
 
         .restart-btn {
             margin-left: auto;
             padding: 10px 22px;
-            background: var(--evergreen);
-            color: #fff;
+            background: var(--honeyed-gold);
+            color: var(--forest-floor);
             border: none;
             border-radius: 8px;
             font-family: 'Figtree', sans-serif;
@@ -321,7 +341,7 @@
             cursor: pointer;
             transition: background 0.15s;
         }
-        .restart-btn:hover { background: var(--forest-floor); }
+        .restart-btn:hover { background: var(--warm-amber); }
 
         /* Staggered animation for def cards */
         .definitions-grid .def-card:nth-child(1)  { animation-delay: 0.03s; }
