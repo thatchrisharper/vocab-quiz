@@ -1,0 +1,544 @@
+<!--
+  STATCAST SLUGGERS — a baseball knowledge quiz game
+  Single-file, self-contained. No external state. Built for a stats-savvy kid.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Statcast Sluggers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --field:#0c3d2a;
+    --field-2:#0a3122;
+    --clay:#c4763a;
+    --chalk:#f3efe2;
+    --chalk-dim:#cfc9b6;
+    --amber:#ffb02e;
+    --amber-deep:#e08a12;
+    --cyan:#27e0cf;
+    --ink:#08201600;
+    --panel:#0a2519;
+    --panel-2:#103626;
+    --correct:#39c46a;
+    --wrong:#ef4d4d;
+    --line:rgba(243,239,226,.18);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Barlow',sans-serif;
+    color:var(--chalk);
+    background:
+      radial-gradient(120% 80% at 50% -10%, #15543a 0%, var(--field) 45%, var(--field-2) 100%);
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:22px 14px 60px;
+    overflow-x:hidden;
+  }
+  /* faint mowed-grass stripes + chalk texture */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:repeating-linear-gradient(115deg, rgba(255,255,255,.022) 0 38px, rgba(0,0,0,.022) 38px 76px);
+  }
+
+  .wrap{width:100%;max-width:640px;position:relative;z-index:1}
+
+  /* ---------- SCOREBOARD HEADER ---------- */
+  .board{
+    background:linear-gradient(180deg,#0c2c1e,#08231800);
+    background-color:#0b2b1d;
+    border:3px solid #06170f;
+    border-radius:16px;
+    box-shadow:0 14px 40px rgba(0,0,0,.45), inset 0 0 0 2px rgba(255,176,46,.12);
+    padding:14px 16px;
+    position:relative;
+    overflow:hidden;
+  }
+  .board::after{ /* rivets */
+    content:"";position:absolute;inset:7px;border:2px dashed rgba(255,176,46,.18);border-radius:11px;pointer-events:none;
+  }
+  .board-top{display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative}
+  .logo{font-family:'Anton',sans-serif;letter-spacing:1px;line-height:.92}
+  .logo .l1{font-size:13px;color:var(--cyan);letter-spacing:3px}
+  .logo .l2{font-size:30px;color:var(--amber);text-shadow:0 2px 0 #7a4a06}
+  .ball{display:inline-block;transform:translateY(2px)}
+
+  .stat-strip{display:flex;gap:10px;align-items:center}
+  .led{
+    background:#06140d;border:1px solid rgba(255,176,46,.25);border-radius:8px;
+    padding:5px 10px;text-align:center;min-width:58px;
+  }
+  .led .k{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;color:var(--chalk-dim);text-transform:uppercase}
+  .led .v{font-family:'Anton',sans-serif;font-size:22px;color:var(--amber);line-height:1}
+  .led.cyan .v{color:var(--cyan)}
+
+  /* progress pips */
+  .pips{display:flex;gap:4px;margin-top:12px;flex-wrap:wrap}
+  .pip{height:6px;flex:1 1 10px;border-radius:3px;background:rgba(243,239,226,.14);transition:.25s}
+  .pip.right{background:var(--correct)}
+  .pip.wrong{background:var(--wrong)}
+  .pip.cur{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+
+  /* diamond / base-running streak */
+  .diamond-wrap{display:flex;align-items:center;gap:10px}
+  .diamond{position:relative;width:46px;height:46px}
+  .diamond svg{display:block}
+  .base{transition:.2s}
+  .base.lit{fill:var(--amber);filter:drop-shadow(0 0 5px var(--amber))}
+  .streak-lab{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;color:var(--chalk-dim);text-transform:uppercase;text-align:center}
+  .streak-lab b{color:var(--cyan);font-size:15px}
+
+  /* ---------- CARD ---------- */
+  .card{
+    margin-top:14px;
+    background:linear-gradient(180deg,#10392680,#0b2a1c80);
+    background-color:#0d3122;
+    border:2px solid var(--line);
+    border-radius:16px;
+    padding:22px 20px 20px;
+    box-shadow:0 12px 34px rgba(0,0,0,.4);
+    position:relative;
+  }
+
+  /* ---------- START SCREEN ---------- */
+  .hero{text-align:center;padding:8px 4px 4px}
+  .hero h1{font-family:'Anton',sans-serif;font-size:46px;line-height:.9;letter-spacing:1px;
+    background:linear-gradient(180deg,#ffd27a,var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 3px 0 rgba(0,0,0,.18);margin-bottom:4px}
+  .hero .sub{font-family:'Barlow Condensed',sans-serif;letter-spacing:3px;color:var(--cyan);text-transform:uppercase;font-size:14px;margin-bottom:18px}
+  .hero p{color:var(--chalk-dim);font-size:15px;max-width:420px;margin:0 auto 20px;line-height:1.45}
+
+  .modes{display:grid;grid-template-columns:1fr;gap:10px;max-width:380px;margin:0 auto 18px;text-align:left}
+  .mode{
+    display:flex;align-items:center;gap:14px;cursor:pointer;
+    background:#0a2719;border:2px solid var(--line);border-radius:12px;padding:12px 14px;transition:.15s;
+  }
+  .mode:hover{border-color:rgba(255,176,46,.5);transform:translateY(-1px)}
+  .mode.sel{border-color:var(--amber);background:#13402a;box-shadow:0 0 0 3px rgba(255,176,46,.15)}
+  .mode .ic{font-size:26px;flex:none;width:34px;text-align:center}
+  .mode .mt{font-family:'Anton',sans-serif;font-size:18px;letter-spacing:.5px}
+  .mode .md{font-size:13px;color:var(--chalk-dim)}
+
+  .btn{
+    font-family:'Anton',sans-serif;letter-spacing:1.5px;font-size:21px;
+    color:#3a2200;background:linear-gradient(180deg,#ffc14d,var(--amber-deep));
+    border:none;border-radius:12px;padding:14px 30px;cursor:pointer;text-transform:uppercase;
+    box-shadow:0 5px 0 #9c5e08, 0 10px 22px rgba(0,0,0,.35);transition:.08s;
+  }
+  .btn:hover{filter:brightness(1.05)}
+  .btn:active{transform:translateY(4px);box-shadow:0 1px 0 #9c5e08}
+  .btn.ghost{background:#0d3122;color:var(--chalk);box-shadow:0 5px 0 #06170f;border:2px solid var(--line)}
+
+  /* ---------- QUESTION ---------- */
+  .qhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px}
+  .tag{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:12px;font-weight:700;
+    color:var(--cyan);border:1px solid rgba(39,224,207,.4);border-radius:20px;padding:4px 12px;white-space:nowrap}
+  .lvl{display:flex;gap:4px}
+  .dot{width:9px;height:9px;border-radius:50%;background:rgba(243,239,226,.2)}
+  .dot.on{background:var(--amber)}
+  .qtext{font-size:23px;font-weight:600;line-height:1.28;margin-bottom:18px}
+
+  .opts{display:grid;gap:10px}
+  .opt{
+    text-align:left;font-family:'Barlow',sans-serif;font-size:17px;font-weight:600;color:var(--chalk);
+    background:#0a2719;border:2px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;
+    display:flex;align-items:center;gap:12px;transition:.13s;width:100%;
+  }
+  .opt:hover:not(:disabled){border-color:rgba(255,176,46,.55);transform:translateX(3px)}
+  .opt:disabled{cursor:default}
+  .opt .lt{font-family:'Anton',sans-serif;font-size:16px;width:26px;height:26px;flex:none;border-radius:6px;
+    background:#06170f;color:var(--amber);display:grid;place-items:center}
+  .opt.correct{border-color:var(--correct);background:rgba(57,196,106,.16)}
+  .opt.correct .lt{background:var(--correct);color:#062012}
+  .opt.wrong{border-color:var(--wrong);background:rgba(239,77,77,.14)}
+  .opt.wrong .lt{background:var(--wrong);color:#2a0606}
+
+  .verdict{margin-top:16px;border-radius:12px;padding:13px 15px;display:none;animation:pop .25s ease}
+  .verdict.show{display:block}
+  .verdict.hit{background:rgba(57,196,106,.12);border:1px solid rgba(57,196,106,.45)}
+  .verdict.out{background:rgba(239,77,77,.1);border:1px solid rgba(239,77,77,.4)}
+  .verdict .vh{font-family:'Anton',sans-serif;font-size:19px;letter-spacing:.5px;margin-bottom:4px}
+  .verdict.hit .vh{color:var(--correct)}
+  .verdict.out .vh{color:var(--wrong)}
+  .verdict .vb{font-size:15px;color:var(--chalk-dim);line-height:1.4}
+  .nextrow{display:flex;justify-content:flex-end;margin-top:16px}
+
+  @keyframes pop{from{transform:scale(.97);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes slideIn{from{transform:translateX(28px);opacity:0}to{transform:translateX(0);opacity:1}}
+  .anim{animation:slideIn .28s ease}
+
+  /* ---------- RESULTS ---------- */
+  .res{text-align:center;padding:6px 2px}
+  .res .trophy{font-size:52px;animation:bounce .8s ease}
+  @keyframes bounce{0%{transform:translateY(-18px) scale(.8);opacity:0}60%{transform:translateY(4px) scale(1.06)}100%{transform:translateY(0) scale(1)}}
+  .res h2{font-family:'Anton',sans-serif;font-size:34px;color:var(--amber);letter-spacing:1px;margin:6px 0 2px}
+  .res .rank-sub{color:var(--chalk-dim);font-size:15px;max-width:430px;margin:0 auto 18px;line-height:1.45}
+  .statline{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:18px 0 22px}
+  .sl{background:#06170f;border:1px solid rgba(255,176,46,.22);border-radius:10px;padding:10px 16px;min-width:84px}
+  .sl .k{font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;font-size:11px;text-transform:uppercase;color:var(--chalk-dim)}
+  .sl .v{font-family:'Anton',sans-serif;font-size:28px;color:var(--amber);line-height:1.05}
+  .sl.big .v{color:var(--cyan);font-size:32px}
+  .res .btnrow{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+  .footnote{text-align:center;color:rgba(243,239,226,.4);font-size:12px;margin-top:18px;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px}
+
+  /* confetti */
+  .confetti{position:fixed;top:-12px;width:9px;height:14px;z-index:50;opacity:.95;animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:.7}}
+</style>
+
+<div class="wrap">
+  <!-- SCOREBOARD -->
+  <div class="board">
+    <div class="board-top">
+      <div class="logo">
+        <div class="l1">STATCAST</div>
+        <div class="l2"><span class="ball">⚾</span> SLUGGERS</div>
+      </div>
+      <div class="stat-strip">
+        <div class="led"><div class="k">At Bat</div><div class="v" id="ledNum">—</div></div>
+        <div class="led cyan"><div class="k">Hits</div><div class="v" id="ledScore">0</div></div>
+        <div class="diamond-wrap">
+          <div class="diamond">
+            <svg viewBox="0 0 46 46" width="46" height="46">
+              <g transform="rotate(45 23 23)">
+                <rect class="base" id="b1" x="28" y="28" width="9" height="9" rx="2" fill="rgba(243,239,226,.18)"/>
+                <rect class="base" id="b2" x="9"  y="28" width="9" height="9" rx="2" fill="rgba(243,239,226,.18)"/>
+                <rect class="base" id="b3" x="9"  y="9"  width="9" height="9" rx="2" fill="rgba(243,239,226,.18)"/>
+                <rect x="28" y="9" width="9" height="9" rx="2" fill="rgba(243,239,226,.32)"/>
+              </g>
+            </svg>
+          </div>
+          <div class="streak-lab">Streak<br><b id="streakV">0</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="pips" id="pips"></div>
+  </div>
+
+  <!-- DYNAMIC CONTENT -->
+  <div class="card" id="card"></div>
+
+  <div class="footnote">Stats current through the 2025 MLB season • Statcast era = 2015–present</div>
+</div>
+
+<script>
+/* ============================ QUESTION BANK ============================ */
+/* level: 1 easy · 2 medium · 3 hard | cat: short label | why: kid-friendly explanation */
+const BANK = [
+  // --- Statcast concepts ---
+  {cat:"Statcast", level:1, q:"In Statcast, what does <b>exit velocity</b> measure?",
+   correct:"How fast the ball leaves the bat",
+   opts:["How fast the ball leaves the bat","How fast the pitch is thrown","How fast a runner sprints","How far the ball travels"],
+   why:"Exit velocity is the speed of the ball right after contact. Harder hits = higher exit velocity, and Statcast tracks every one."},
+  {cat:"Statcast", level:2, q:"Statcast started tracking <b>every</b> MLB game in what year?",
+   correct:"2015", opts:["2015","2010","2018","2021"],
+   why:"2015 is when Statcast went league-wide, so that's the start of the 'Statcast era' you hear announcers talk about."},
+  {cat:"Statcast", level:2, q:"What does <b>launch angle</b> describe?",
+   correct:"The up-or-down angle the ball comes off the bat",
+   opts:["The up-or-down angle the ball comes off the bat","The angle the pitch is thrown","Which way the bat is tilted","The angle of the outfield wall"],
+   why:"Launch angle is the vertical angle off the bat. Around 25–35° with high exit velocity is the home-run sweet spot."},
+  {cat:"Statcast", level:3, q:"A <b>barrel</b> is a batted ball with the perfect mix of which two things?",
+   correct:"Exit velocity and launch angle",
+   opts:["Exit velocity and launch angle","Spin rate and velocity","Distance and direction","Bat speed and pitch speed"],
+   why:"A 'barrel' combines high exit velocity with the ideal launch angle — the combo that produces the most homers and extra-base hits."},
+  {cat:"Statcast", level:2, q:"<b>Sprint speed</b> is measured in which units?",
+   correct:"Feet per second", opts:["Feet per second","Miles per hour","Seconds per base","Steps per minute"],
+   why:"Statcast clocks runners in feet per second. About 27 ft/sec is average, and roughly 30 ft/sec is burner territory."},
+  {cat:"Statcast", level:3, q:"What's considered an <b>elite</b> sprint speed in MLB?",
+   correct:"About 30 ft/sec", opts:["About 30 ft/sec","About 20 ft/sec","About 45 ft/sec","About 12 ft/sec"],
+   why:"League average is ~27 ft/sec. Hit 30 and you're one of the fastest players in baseball."},
+  {cat:"Statcast", level:2, q:"A pitch's <b>spin rate</b> is measured in…",
+   correct:"RPM (revolutions per minute)", opts:["RPM (revolutions per minute)","MPH","Degrees","Pounds of force"],
+   why:"Spin is measured in RPM. High spin can make a fastball look like it 'rises' or a curve break harder."},
+
+  // --- Records ---
+  {cat:"Records", level:2, q:"Who hit the <b>hardest-hit ball</b> of the Statcast era at 122.9 mph?",
+   correct:"Oneil Cruz", opts:["Oneil Cruz","Giancarlo Stanton","Aaron Judge","Shohei Ohtani"],
+   why:"Pirates SS Oneil Cruz crushed a 122.9 mph homer in May 2025 — the hardest-hit ball ever tracked. He also owns the #2 spot!"},
+  {cat:"Records", level:3, q:"Before Oneil Cruz took over, who owned <b>most of the top exit-velocity</b> spots?",
+   correct:"Giancarlo Stanton", opts:["Giancarlo Stanton","Mike Trout","Pete Alonso","Bryce Harper"],
+   why:"Stanton was the original Statcast monster — for years he had most of the hardest-hit balls on the leaderboard."},
+  {cat:"Records", level:3, q:"Oneil Cruz's record 122.9 mph ball in 2025 was a…",
+   correct:"Home run", opts:["Home run","Single","Ground-rule double","Foul ball"],
+   why:"It was a homer that splashed into the Allegheny River behind PNC Park. Most super-hard balls are line drives, so a 122.9 HR is wild."},
+  {cat:"Records", level:2, q:"Who holds the MLB <b>single-season</b> home run record with 73?",
+   correct:"Barry Bonds", opts:["Barry Bonds","Mark McGwire","Aaron Judge","Babe Ruth"],
+   why:"Barry Bonds hit 73 homers in 2001. McGwire's 70 (1998) is second."},
+  {cat:"Records", level:1, q:"Who set the <b>American League</b> single-season HR record with 62?",
+   correct:"Aaron Judge", opts:["Aaron Judge","Roger Maris","Babe Ruth","Mickey Mantle"],
+   why:"Aaron Judge hit 62 in 2022, passing Roger Maris's 61 from way back in 1961."},
+  {cat:"Records", level:1, q:"Who is the <b>only player ever</b> with a 50–50 season (50 HR & 50 SB)?",
+   correct:"Shohei Ohtani", opts:["Shohei Ohtani","Ronald Acuña Jr.","Bobby Witt Jr.","Mike Trout"],
+   why:"Ohtani did it in 2024 — finishing with 54 homers and 59 steals. Nobody else has even hit 50/50."},
+  {cat:"Records", level:3, q:"Through 2025, how many <b>MVP awards</b> has Shohei Ohtani won?",
+   correct:"4", opts:["4","2","3","6"],
+   why:"Ohtani won his 4th MVP in 2025 — and he's done it in both leagues."},
+  {cat:"Records", level:2, q:"Who threw the <b>fastest pitch ever officially recorded</b> (105.8 mph)?",
+   correct:"Aroldis Chapman", opts:["Aroldis Chapman","Jacob deGrom","Ben Joyce","Nolan Ryan"],
+   why:"Aroldis Chapman's 105.8 mph fastball is the fastest ever recorded. A few pitchers now flirt with 105, but Chapman set the bar."},
+
+  // --- History ---
+  {cat:"History", level:2, q:"Who holds the <b>career</b> home run record with 762?",
+   correct:"Barry Bonds", opts:["Barry Bonds","Hank Aaron","Babe Ruth","Albert Pujols"],
+   why:"Bonds finished with 762 career homers. Hank Aaron (755) and Babe Ruth (714) are next."},
+  {cat:"History", level:3, q:"After Negro Leagues stats were added in 2024, who became the <b>career batting average</b> leader?",
+   correct:"Josh Gibson", opts:["Josh Gibson","Ty Cobb","Ted Williams","Tony Gwynn"],
+   why:"Josh Gibson's .372 career average now tops the list, passing Ty Cobb's .366 when MLB officially included Negro Leagues records."},
+
+  // --- 2025 Season ---
+  {cat:"2025", level:1, q:"Who won the <b>2025 World Series</b>?",
+   correct:"Los Angeles Dodgers", opts:["Los Angeles Dodgers","Toronto Blue Jays","New York Yankees","Milwaukee Brewers"],
+   why:"The Dodgers won it in a 7-game classic — clinching with a comeback win in extra innings of Game 7."},
+  {cat:"2025", level:2, q:"In the 2025 World Series, the Dodgers beat which team?",
+   correct:"Toronto Blue Jays", opts:["Toronto Blue Jays","Seattle Mariners","New York Yankees","Philadelphia Phillies"],
+   why:"The Blue Jays pushed it to a Game 7, but the Dodgers won 5–4 in 11 innings to repeat as champs."},
+  {cat:"2025", level:3, q:"The Dodgers' 2025 title made them the first team to <b>repeat as champions</b> since which team?",
+   correct:"2000 Yankees", opts:["2000 Yankees","2009 Yankees","1995 Braves","1989 A's"],
+   why:"No team had repeated since the Yankees three-peated from 1998–2000 — a 25-year gap."},
+  {cat:"2025", level:2, q:"How many home runs did Shohei Ohtani hit in 2025 (a new Dodgers record)?",
+   correct:"55", opts:["55","47","62","50"],
+   why:"Ohtani hit 55 — one more than his 54 in 2024 — and he was the first player ever to finish a season with exactly 55."},
+  {cat:"2025", level:3, q:"Who was named <b>2025 World Series MVP</b> after even pitching the final outs of Game 7?",
+   correct:"Yoshinobu Yamamoto", opts:["Yoshinobu Yamamoto","Shohei Ohtani","Mookie Betts","Freddie Freeman"],
+   why:"Yamamoto threw a complete game earlier in the Series, then came out of the bullpen in Game 7 to finish it off."},
+  {cat:"2025", level:3, q:"Who hit the <b>longest home run</b> of the 2025 season (493 feet)?",
+   correct:"Nick Kurtz", opts:["Nick Kurtz","Aaron Judge","Oneil Cruz","Kyle Schwarber"],
+   why:"Athletics rookie Nick Kurtz launched a 493-foot grand slam that cleared the whole ballpark — the year's longest."},
+
+  // --- Rules ---
+  {cat:"Rules", level:1, q:"How far apart are the <b>bases</b>?",
+   correct:"90 feet", opts:["90 feet","60 feet","100 feet","120 feet"],
+   why:"Bases are 90 feet apart — a number that's been the same since the 1800s and somehow still makes for super-close plays."},
+  {cat:"Rules", level:2, q:"How far is the pitcher's rubber from <b>home plate</b>?",
+   correct:"60 feet 6 inches", opts:["60 feet 6 inches","60 feet","66 feet","55 feet"],
+   why:"It's exactly 60 feet, 6 inches. Legend says the '6 inches' came from a misread blueprint long ago."},
+  {cat:"Rules", level:2, q:"In a <b>perfect game</b>, how many batters does the pitcher retire?",
+   correct:"27", opts:["27","24","21","30"],
+   why:"A perfect game = no one reaches base at all: 9 innings × 3 outs = 27 batters up, 27 down."},
+
+  // --- Lingo / Fun ---
+  {cat:"Lingo", level:1, q:"What is a <b>'two-way player'</b> like Shohei Ohtani?",
+   correct:"A player who both pitches and hits", opts:["A player who both pitches and hits","A switch-hitter","A player who plays two positions","A player on two teams"],
+   why:"A two-way player both pitches AND hits at a star level — something almost no one has done since Babe Ruth."},
+  {cat:"Lingo", level:2, q:"Hitting a single, double, triple, and home run in one game is called…",
+   correct:"Hitting for the cycle", opts:["Hitting for the cycle","A grand slam","A golden sombrero","A walk-off"],
+   why:"That's 'the cycle.' The triple is usually the hardest piece to get!"},
+  {cat:"Lingo", level:3, q:"The <b>'Mendoza Line'</b> refers to a batting average of…",
+   correct:".200", opts:[".200",".300",".250",".150"],
+   why:"The Mendoza Line is .200 — named after Mario Mendoza. Hitting below it means you're struggling at the plate."},
+  {cat:"Lingo", level:3, q:"A <b>'golden sombrero'</b> means a batter did what four times in one game?",
+   correct:"Struck out", opts:["Struck out","Homered","Walked","Stole a base"],
+   why:"Four strikeouts in a game = a golden sombrero. Definitely not a hat you want to wear!"},
+];
+
+/* ============================ GAME STATE ============================ */
+const QUIZ_LEN = 12;
+const MODES = {
+  little:  {name:"Little League", levels:[1,2],   note:"Friendly mix — basics and easy stats"},
+  allstar: {name:"All-Star",      levels:[1,2,3], note:"Balanced mix of everything (recommended)"},
+  hof:     {name:"Hall of Fame",  levels:[2,3],   note:"Tough stuff — records & deep cuts"},
+};
+let mode = "allstar";
+let deck = [];
+let idx = 0, score = 0, streak = 0, bestStreak = 0, results = [];
+const card = document.getElementById('card');
+
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function buildDeck(){
+  const pool = BANK.filter(q => MODES[mode].levels.includes(q.level));
+  deck = shuffle(pool).slice(0, Math.min(QUIZ_LEN, pool.length));
+}
+
+/* ============================ START SCREEN ============================ */
+function renderStart(){
+  document.getElementById('ledNum').textContent = "—";
+  document.getElementById('ledScore').textContent = "0";
+  document.getElementById('streakV').textContent = "0";
+  setBases(0);
+  document.getElementById('pips').innerHTML = "";
+  const modeRows = Object.entries(MODES).map(([k,m])=>`
+    <div class="mode ${k===mode?'sel':''}" data-mode="${k}">
+      <div class="ic">${k==='little'?'🧢':k==='allstar'?'⭐':'🏆'}</div>
+      <div><div class="mt">${m.name}</div><div class="md">${m.note}</div></div>
+    </div>`).join("");
+  card.innerHTML = `
+    <div class="hero">
+      <h1>Play Ball!</h1>
+      <div class="sub">Baseball Knowledge Showdown</div>
+      <p>Answer ${QUIZ_LEN} questions on stats, records, rules, and the wild world of Statcast. Each correct answer is a <b>hit</b> — string them together to load the bases!</p>
+      <div class="modes">${modeRows}</div>
+      <button class="btn" id="startBtn">Step Up to the Plate ⚾</button>
+    </div>`;
+  card.querySelectorAll('.mode').forEach(el=>{
+    el.onclick=()=>{mode=el.dataset.mode;renderStart();};
+  });
+  document.getElementById('startBtn').onclick = startGame;
+}
+
+function startGame(){
+  buildDeck();
+  idx=0;score=0;streak=0;bestStreak=0;results=[];
+  document.getElementById('ledScore').textContent="0";
+  renderPips();
+  renderQuestion();
+}
+
+/* ============================ PIPS ============================ */
+function renderPips(){
+  const p=document.getElementById('pips');
+  p.innerHTML="";
+  for(let i=0;i<deck.length;i++){
+    const d=document.createElement('div');d.className='pip';
+    if(results[i]==='right')d.classList.add('right');
+    else if(results[i]==='wrong')d.classList.add('wrong');
+    else if(i===idx)d.classList.add('cur');
+    p.appendChild(d);
+  }
+}
+
+/* ============================ DIAMOND ============================ */
+function setBases(n){
+  const bases=['b1','b2','b3'];
+  bases.forEach((id,i)=>{
+    document.getElementById(id).classList.toggle('lit', i < Math.min(n,3));
+  });
+}
+
+/* ============================ QUESTION ============================ */
+function renderQuestion(){
+  const q=deck[idx];
+  document.getElementById('ledNum').textContent=`${idx+1}/${deck.length}`;
+  renderPips();
+  const opts=shuffle(q.opts);
+  const letters=['A','B','C','D'];
+  card.innerHTML=`
+    <div class="anim">
+      <div class="qhead">
+        <span class="tag">${q.cat}</span>
+        <div class="lvl" title="Difficulty">
+          ${[1,2,3].map(l=>`<span class="dot ${l<=q.level?'on':''}"></span>`).join("")}
+        </div>
+      </div>
+      <div class="qtext">${q.q}</div>
+      <div class="opts" id="opts">
+        ${opts.map((o,i)=>`<button class="opt" data-val="${encodeURIComponent(o)}">
+            <span class="lt">${letters[i]}</span><span>${o}</span></button>`).join("")}
+      </div>
+      <div class="verdict" id="verdict"></div>
+      <div class="nextrow" id="nextrow"></div>
+    </div>`;
+  card.querySelectorAll('.opt').forEach(b=>{
+    b.onclick=()=>answer(decodeURIComponent(b.dataset.val), b);
+  });
+}
+
+function answer(val, btn){
+  const q=deck[idx];
+  const correct = val===q.correct;
+  card.querySelectorAll('.opt').forEach(b=>{
+    b.disabled=true;
+    const v=decodeURIComponent(b.dataset.val);
+    if(v===q.correct)b.classList.add('correct');
+    else if(b===btn)b.classList.add('wrong');
+  });
+
+  if(correct){
+    score++; streak++; bestStreak=Math.max(bestStreak,streak);
+    results[idx]='right';
+    document.getElementById('ledScore').textContent=score;
+  }else{
+    streak=0; results[idx]='wrong';
+  }
+  document.getElementById('streakV').textContent=streak;
+  setBases(streak);
+
+  // verdict text
+  let head;
+  if(correct){
+    if(streak>=4){head="💥 GRAND SLAM! Streak of "+streak+"!";}
+    else if(streak===3){head="🔥 Bases loaded! 3 in a row!";}
+    else {head=["⚾ Base hit!","✅ Nailed it!","💪 Crushed it!","👏 Good eye!"][Math.random()*4|0];}
+  } else {
+    head=["❌ Strike! Not quite.","😬 Caught looking.","🪵 Whiff — but now you know!"][Math.random()*3|0];
+  }
+  const v=document.getElementById('verdict');
+  v.className='verdict show '+(correct?'hit':'out');
+  v.innerHTML=`<div class="vh">${head}</div><div class="vb">${q.why}</div>`;
+
+  if(streak>0 && streak%4===0) burstConfetti(18);
+
+  const isLast = idx===deck.length-1;
+  document.getElementById('nextrow').innerHTML=
+    `<button class="btn" id="nextBtn">${isLast?'See My Stats →':'Next Pitch →'}</button>`;
+  document.getElementById('nextBtn').onclick=()=>{
+    if(isLast) renderResult();
+    else {idx++; renderQuestion();}
+  };
+}
+
+/* ============================ RESULTS ============================ */
+function avgStr(){
+  const a=(score/deck.length);
+  const s=a.toFixed(3);
+  return a<1 ? s.replace(/^0/,'') : s; // .833 style, or 1.000
+}
+function rank(){
+  const a=score/deck.length;
+  if(a>=0.95) return ["🏆","Hall of Famer","First-ballot, no doubt. You know this game inside and out — go correct the grown-ups now."];
+  if(a>=0.85) return ["🥇","MVP","Elite. You're carrying the lineup and the stat sheet. Cooperstown is calling."];
+  if(a>=0.70) return ["⭐","All-Star","Big-league talent. A few tricky pitches got you, but you mash the tough stuff."];
+  if(a>=0.55) return ["🧤","Everyday Starter","Solid in the lineup every day. Keep watching games and those gaps close fast."];
+  if(a>=0.35) return ["🧢","Utility Player","Useful and getting better. Brush up on the Statcast stuff and run it back."];
+  return ["🐣","Rookie Call-Up","Welcome to the bigs! Every legend started here — hit 'Play Again' and climb the ranks."];
+}
+function renderResult(){
+  const [emoji,title,blurb]=rank();
+  document.getElementById('ledNum').textContent="FINAL";
+  renderPips();
+  if(score/deck.length>=0.7) burstConfetti(60);
+  card.innerHTML=`
+    <div class="res anim">
+      <div class="trophy">${emoji}</div>
+      <h2>${title}</h2>
+      <div class="rank-sub">${blurb}</div>
+      <div class="statline">
+        <div class="sl"><div class="k">Hits</div><div class="v">${score}</div></div>
+        <div class="sl"><div class="k">At Bats</div><div class="v">${deck.length}</div></div>
+        <div class="sl big"><div class="k">Avg</div><div class="v">${avgStr()}</div></div>
+        <div class="sl"><div class="k">Best Streak</div><div class="v">${bestStreak}</div></div>
+      </div>
+      <div class="btnrow">
+        <button class="btn" id="again">Play Again ⚾</button>
+        <button class="btn ghost" id="home">Change Mode</button>
+      </div>
+    </div>`;
+  document.getElementById('again').onclick=startGame;
+  document.getElementById('home').onclick=renderStart;
+}
+
+/* ============================ CONFETTI ============================ */
+function burstConfetti(n){
+  const colors=['#ffb02e','#27e0cf','#39c46a','#f3efe2','#ef4d4d'];
+  for(let i=0;i<n;i++){
+    const c=document.createElement('div');
+    c.className='confetti';
+    c.style.left=Math.random()*100+'vw';
+    c.style.background=colors[Math.random()*colors.length|0];
+    c.style.animationDuration=(1.6+Math.random()*1.4)+'s';
+    c.style.transform='rotate('+(Math.random()*360)+'deg)';
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),3200);
+  }
+}
+
+/* ============================ GO ============================ */
+renderStart();
+</script>
