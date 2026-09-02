@@ -5,6 +5,7 @@ Two standalone static HTML quiz apps — no build system, no package manager, no
 
 - **index.html** — Vocabulary Matcher: loads word/definition pairs from a Google Sheets CSV, user clicks words to match definitions; supports multiple vocab sets via a dropdown (each set = a separate sheet tab)
 - **states.html** — US States & Capitals Quiz: interactive D3.js map, user types state names and capitals
+- **latin.html** — Latin Demonstratives study app (Capitulum 8): six practice modes over the `hic`/`ille` declension charts; all data hard-coded in the file, no backend
 - **vocab.md** — source vocabulary word list (16 words, Shakespeare-era)
 
 ## Architecture
