@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Latin Demonstratives — hic &amp; ille</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --parchment:   #F5EFE0;
+    --linen:       #EDE7D9;
+    --stone:       #8C8578;
+    --bark:        #4A4239;
+    --sage-mist:   #B7C9A8;
+    --evergreen:   #2D5A3D;
+    --forest-floor:#1E3A2B;
+    --honeyed-gold:#D4A84B;
+    --warm-amber:  #C47D2E;
+    --correct:     #5A9E6F;
+    --try-again:   #C86B5A;
+
+    --bg:            var(--parchment);
+    --panel-bg:      #FFFFFF;
+    --panel-alt:     #FBF8F1;
+    --text:          var(--bark);
+    --text-muted:    var(--stone);
+    --accent:        var(--evergreen);
+    --accent-deep:   var(--forest-floor);
+    --accent-light:  rgba(183,201,168,0.35);
+    --success:       var(--correct);
+    --success-light: rgba(90,158,111,0.14);
+    --error:         var(--try-again);
+    --error-light:   rgba(200,107,90,0.14);
+    --border:        #E2DBCB;
+    --shadow:        0 1px 2px rgba(74,66,57,0.06), 0 4px 14px rgba(74,66,57,0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg:            #191B18;
+        --panel-bg:      #23261F;
+        --panel-alt:     #1F221C;
+        --text:          #EDE7D9;
+        --text-muted:    #A19A8B;
+        --accent:        #8FBF9E;
+        --accent-deep:   #14261B;
+        --accent-light:  rgba(143,191,158,0.16);
+        --success:       #7FC194;
+        --success-light: rgba(127,193,148,0.16);
+        --error:         #E08D7B;
+        --error-light:   rgba(224,141,123,0.16);
+        --border:        #34382E;
+        --parchment:     #EDE7D9;
+        --shadow:        0 1px 2px rgba(0,0,0,0.3), 0 4px 14px rgba(0,0,0,0.25);
+    }
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Figtree', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* ── Header ── */
+.app-header {
+    background: var(--forest-floor);
+    padding: 14px 20px 0;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+.header-top {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.app-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1.4rem;
+    color: var(--parchment);
+    line-height: 1.1;
+}
+.app-sub {
+    font-size: 0.8rem;
+    color: var(--sage-mist);
+    font-weight: 500;
+}
+.header-spacer { flex: 1 1 auto; }
+
+.tabs {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: rgba(245,239,224,0.62);
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 600;
+    padding: 9px 14px;
+    border-radius: 9px 9px 0 0;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+}
+.tab:hover { color: var(--parchment); background: rgba(255,255,255,0.07); }
+.tab.active {
+    background: var(--bg);
+    color: var(--accent);
+}
+
+/* ── Layout ── */
+main { padding: 18px 16px 64px; max-width: 940px; margin: 0 auto; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+.card {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 18px;
+    margin-bottom: 16px;
+}
+
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.row + .row { margin-top: 10px; }
+
+.label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-right: 4px;
+}
+
+/* ── Chips / buttons ── */
+.chip {
+    appearance: none;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 8px 13px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    background: var(--panel-alt);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.14s;
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip.on {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+@media (prefers-color-scheme: dark) { .chip.on { color: #14261B; } }
+
+.btn {
+    appearance: none;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    transition: filter 0.14s, transform 0.08s;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn:active { transform: scale(0.975); }
+.btn.gold { background: var(--honeyed-gold); color: var(--forest-floor); }
+.btn.ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1.5px solid var(--border);
+}
+.btn.ghost:hover { color: var(--accent); border-color: var(--accent); }
+@media (prefers-color-scheme: dark) { .btn { color: #14261B; } }
+
+/* ── Chart mode ── */
+.chart-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table.chart {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    min-width: 560px;
+}
+table.chart th {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-align: left;
+    padding: 0 8px 8px;
+}
+table.chart th.case-head { width: 62px; }
+table.chart td { padding: 3px; }
+td.case-cell {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1rem;
+    color: var(--accent);
+    padding-right: 8px;
+    white-space: nowrap;
+}
+.cell-input {
+    font-family: 'Figtree', sans-serif;
+    font-size: 1rem;
+    width: 100%;
+    min-width: 96px;
+    padding: 10px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    background: var(--panel-alt);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.14s, background 0.14s;
+}
+.cell-input:focus { border-color: var(--accent); background: var(--panel-bg); }
+.cell-input.ok    { border-color: var(--success); background: var(--success-light); }
+.cell-input.bad   { border-color: var(--error);   background: var(--error-light); }
+.cell-wrap { position: relative; }
+.cell-fix {
+    display: none;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--error);
+    padding: 3px 4px 0;
+}
+.cell-fix.show { display: block; }
+.cell-input.wide { min-width: 150px; }
+
+.chart-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1.25rem;
+    margin-bottom: 2px;
+}
+.chart-gloss { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px; }
+
+/* ── Quiz shared ── */
+.prompt-card { text-align: center; padding: 26px 18px; }
+.prompt-kicker {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+.prompt-main {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 2rem;
+    line-height: 1.2;
+    margin-bottom: 6px;
+    overflow-wrap: anywhere;
+}
+.prompt-main.latin { color: var(--accent); }
+.prompt-note { font-size: 0.9rem; color: var(--text-muted); }
+
+.answer-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 18px auto 0;
+    max-width: 420px;
+}
+#type-input {
+    flex: 1;
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1.3rem;
+    text-align: center;
+    padding: 12px;
+    border: 2px solid var(--border);
+    border-radius: 11px;
+    background: var(--panel-alt);
+    color: var(--text);
+    outline: none;
+}
+#type-input:focus { border-color: var(--accent); }
+#type-input.ok  { border-color: var(--success); background: var(--success-light); }
+#type-input.bad { border-color: var(--error); background: var(--error-light); }
+
+.macron-pad {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+.macron-key {
+    appearance: none;
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1.05rem;
+    width: 42px;
+    height: 38px;
+    border-radius: 9px;
+    border: 1.5px solid var(--border);
+    background: var(--panel-alt);
+    color: var(--text);
+    cursor: pointer;
+}
+.macron-key:hover { border-color: var(--accent); color: var(--accent); }
+
+.feedback {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 11px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: none;
+    text-align: left;
+}
+.feedback.show { display: block; }
+.feedback.good { background: var(--success-light); color: var(--success); }
+.feedback.bad  { background: var(--error-light);  color: var(--error); }
+.feedback .fb-detail {
+    display: block;
+    font-weight: 500;
+    font-size: 0.86rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    line-height: 1.5;
+}
+
+.scorebar {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+.scorebar b { color: var(--text); font-weight: 700; }
+
+/* ── Identify mode ── */
+.pick-group { margin-top: 14px; }
+.pick-group .label { display: block; margin-bottom: 6px; }
+.pick-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+
+/* ── Meaning / multiple choice ── */
+.mc-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    max-width: 460px;
+    margin: 18px auto 0;
+}
+.mc-opt {
+    appearance: none;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: left;
+    padding: 13px 15px;
+    border-radius: 11px;
+    border: 1.5px solid var(--border);
+    background: var(--panel-alt);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.14s;
+}
+.mc-opt:hover { border-color: var(--accent); }
+.mc-opt.ok  { border-color: var(--success); background: var(--success-light); color: var(--success); }
+.mc-opt.bad { border-color: var(--error);   background: var(--error-light);   color: var(--error); }
+.mc-opt:disabled { cursor: default; }
+
+/* ── Flashcards ── */
+.flash {
+    min-height: 190px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    text-align: center;
+}
+.flash-front {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 2.1rem;
+    color: var(--accent);
+    overflow-wrap: anywhere;
+}
+.flash-front.small { font-size: 1.5rem; color: var(--text); }
+.flash-back { font-size: 1rem; line-height: 1.6; color: var(--text); }
+.flash-back .muted { color: var(--text-muted); font-size: 0.88rem; }
+.flash-hint { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; letter-spacing: 0.04em; }
+
+/* ── Review list ── */
+.review-list { list-style: none; margin-top: 10px; }
+.review-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 2px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.92rem;
+}
+.review-list li:last-child { border-bottom: none; }
+.review-list .r-q { color: var(--text-muted); }
+.review-list .r-a { font-family: 'DM Serif Display', Georgia, serif; color: var(--accent); white-space: nowrap; }
+
+.hint-text { font-size: 0.84rem; color: var(--text-muted); line-height: 1.6; }
+.hint-text b { color: var(--text); }
+.hint-text code {
+    font-family: 'DM Serif Display', Georgia, serif;
+    background: var(--accent-light);
+    padding: 1px 5px;
+    border-radius: 5px;
+}
+
+.toggle-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+.toggle-line input { width: 17px; height: 17px; accent-color: var(--evergreen); }
+
+.empty-note {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    padding: 26px 10px;
+}
+
+@media (max-width: 560px) {
+    .app-title { font-size: 1.2rem; }
+    .prompt-main { font-size: 1.7rem; }
+    .flash-front { font-size: 1.8rem; }
+    main { padding: 14px 12px 60px; }
+    .card { padding: 14px; }
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+    <div class="header-top">
+        <div class="app-title">Latin Demonstratives</div>
+        <div class="app-sub">Capitulum 8 &middot; hic &amp; ille</div>
+        <div class="header-spacer"></div>
+    </div>
+    <nav class="tabs" id="tabs">
+        <button class="tab active" data-mode="chart">Fill the Chart</button>
+        <button class="tab" data-mode="type">Type the Form</button>
+        <button class="tab" data-mode="identify">Name the Form</button>
+        <button class="tab" data-mode="meaning">Meanings</button>
+        <button class="tab" data-mode="flash">Flashcards</button>
+        <button class="tab" data-mode="study">Study Sheet</button>
+    </nav>
+</header>
+
+<main>
+    <!-- ══ CHART MODE ══ -->
+    <section class="panel active" id="panel-chart">
+        <div class="card">
+            <div class="row">
+                <span class="label">Chart</span>
+                <div class="row" id="chart-picker" style="gap:6px"></div>
+            </div>
+            <div class="row">
+                <label class="toggle-line"><input type="checkbox" id="chart-meanings" checked> Include meanings column</label>
+                <label class="toggle-line"><input type="checkbox" id="chart-macrons"> Require macrons</label>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="chart-title" id="chart-title"></div>
+            <div class="chart-gloss" id="chart-gloss"></div>
+            <div class="chart-scroll">
+                <table class="chart" id="chart-table"></table>
+            </div>
+            <div class="row" style="margin-top:16px">
+                <button class="btn" id="chart-check">Check Chart</button>
+                <button class="btn ghost" id="chart-reveal">Show Answers</button>
+                <button class="btn ghost" id="chart-clear">Clear</button>
+                <span class="header-spacer"></span>
+                <span id="chart-score" style="font-size:0.9rem;font-weight:700"></span>
+            </div>
+            <div class="macron-pad" id="chart-pad"></div>
+        </div>
+
+        <div class="card">
+            <p class="hint-text">
+                <b>Tip:</b> press <b>Enter</b> or <b>Tab</b> to jump to the next box. Macrons are optional
+                unless you switch on “Require macrons” — tap the <code>ā ē ī ō ū</code> keys to type them.
+            </p>
+        </div>
+    </section>
+
+    <!-- ══ TYPE MODE ══ -->
+    <section class="panel" id="panel-type">
+        <div class="card" id="type-scope-card"></div>
+        <div class="card prompt-card">
+            <div class="scorebar" id="type-score"></div>
+            <div class="prompt-kicker" id="type-kicker">Give the form</div>
+            <div class="prompt-main" id="type-prompt"></div>
+            <div class="prompt-note" id="type-note"></div>
+            <div class="answer-row">
+                <input id="type-input" type="text" autocomplete="off" autocapitalize="off"
+                       autocorrect="off" spellcheck="false" placeholder="type the Latin form">
+            </div>
+            <div class="macron-pad" id="type-pad"></div>
+            <div class="row" style="justify-content:center;margin-top:14px">
+                <button class="btn" id="type-submit">Check</button>
+                <button class="btn ghost" id="type-skip">Show me</button>
+            </div>
+            <div class="feedback" id="type-feedback"></div>
+        </div>
+        <div class="card" id="type-review-card" style="display:none">
+            <div class="label">Forms to review</div>
+            <ul class="review-list" id="type-review"></ul>
+        </div>
+    </section>
+
+    <!-- ══ IDENTIFY MODE ══ -->
+    <section class="panel" id="panel-identify">
+        <div class="card" id="id-scope-card"></div>
+        <div class="card prompt-card">
+            <div class="scorebar" id="id-score"></div>
+            <div class="prompt-kicker">What form is this?</div>
+            <div class="prompt-main latin" id="id-prompt"></div>
+            <div class="prompt-note" id="id-note"></div>
+
+            <div class="pick-group">
+                <span class="label">Case</span>
+                <div class="pick-row" id="id-case"></div>
+            </div>
+            <div class="pick-group">
+                <span class="label">Number</span>
+                <div class="pick-row" id="id-number"></div>
+            </div>
+            <div class="pick-group">
+                <span class="label">Gender</span>
+                <div class="pick-row" id="id-gender"></div>
+            </div>
+
+            <div class="row" style="justify-content:center;margin-top:18px">
+                <button class="btn" id="id-submit">Check</button>
+                <button class="btn ghost" id="id-skip">Show me</button>
+            </div>
+            <div class="feedback" id="id-feedback"></div>
+        </div>
+    </section>
+
+    <!-- ══ MEANING MODE ══ -->
+    <section class="panel" id="panel-meaning">
+        <div class="card" id="mn-scope-card"></div>
+        <div class="card prompt-card">
+            <div class="scorebar" id="mn-score"></div>
+            <div class="prompt-kicker" id="mn-kicker"></div>
+            <div class="prompt-main" id="mn-prompt"></div>
+            <div class="mc-grid" id="mn-options"></div>
+            <div class="feedback" id="mn-feedback"></div>
+            <div class="row" style="justify-content:center;margin-top:14px">
+                <button class="btn gold" id="mn-next" style="display:none">Next</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ FLASHCARD MODE ══ -->
+    <section class="panel" id="panel-flash">
+        <div class="card" id="fl-scope-card"></div>
+        <div class="card">
+            <div class="scorebar" id="fl-score"></div>
+            <div class="flash" id="flash-card">
+                <div class="flash-front" id="flash-front"></div>
+                <div class="flash-back" id="flash-back" style="display:none"></div>
+                <div class="flash-hint" id="flash-hint">tap the card to flip</div>
+            </div>
+            <div class="row" id="flash-grade" style="justify-content:center;margin-top:14px;display:none">
+                <button class="btn ghost" id="flash-again">Study again</button>
+                <button class="btn" id="flash-got">Got it</button>
+            </div>
+            <div class="row" style="justify-content:center;margin-top:10px">
+                <button class="btn ghost" id="flash-shuffle">Reshuffle deck</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ STUDY SHEET ══ -->
+    <section class="panel" id="panel-study">
+        <div class="card">
+            <p class="hint-text">
+                The full charts, for checking your work. <b>hic, haec, hoc</b> = “this / these” (near me);
+                <b>ille, illa, illud</b> = “that / those” (over there). They agree with their noun in
+                <b>case, number, and gender</b> — like an adjective.
+            </p>
+        </div>
+        <div id="study-tables"></div>
+        <div class="card">
+            <div class="label" style="margin-bottom:8px">Watch out for these</div>
+            <p class="hint-text">
+                &bull; <code>huius</code>, <code>huic</code>, <code>illīus</code>, <code>illī</code> are the same
+                for <b>all three genders</b> in the singular.<br>
+                &bull; <code>hīs</code> and <code>illīs</code> cover <b>dative and ablative plural</b>, all genders.<br>
+                &bull; Neuter nominative and accusative always match: <code>hoc / hoc</code>, <code>haec / haec</code>,
+                <code>illud / illud</code>, <code>illa / illa</code>.<br>
+                &bull; <code>haec</code> is fem. sg. nom. <i>and</i> neut. pl. nom./acc. — <code>illa</code> works the same way.<br>
+                &bull; Only the macron separates <code>hoc</code> (nom./acc.) from <code>hōc</code> (abl.),
+                and <code>illa</code> from <code>illā</code>.
+            </p>
+        </div>
+    </section>
+</main>
+
+<script>
+/* ═══════════════════════ DATA ═══════════════════════ */
+
+const CASES = [
+    { key:'nom', abbr:'Nom', full:'Nominative' },
+    { key:'gen', abbr:'Gen', full:'Genitive'   },
+    { key:'dat', abbr:'Dat', full:'Dative'     },
+    { key:'acc', abbr:'Acc', full:'Accusative' },
+    { key:'abl', abbr:'Abl', full:'Ablative'   }
+];
+
+const GENDERS = [
+    { key:'m', abbr:'Masc', full:'Masculine' },
+    { key:'f', abbr:'Fem',  full:'Feminine'  },
+    { key:'n', abbr:'Neut', full:'Neuter'    }
+];
+
+const NUMBERS = [
+    { key:'sg', abbr:'Sg', full:'Singular' },
+    { key:'pl', abbr:'Pl', full:'Plural'   }
+];
+
+const CHARTS = [
+    { id:'hic-sg',  word:'hic',  num:'sg', title:'hic, haec, hoc — Singular',   gloss:'this' },
+    { id:'hic-pl',  word:'hic',  num:'pl', title:'hic, haec, hoc — Plural',     gloss:'these' },
+    { id:'ille-sg', word:'ille', num:'sg', title:'ille, illa, illud — Singular', gloss:'that' },
+    { id:'ille-pl', word:'ille', num:'pl', title:'ille, illa, illud — Plural',   gloss:'those' }
+];
+
+/* forms[chartId][caseKey] = [masc, fem, neut] */
+const FORMS = {
+    'hic-sg': {
+        nom: ['hic',    'haec',   'hoc'],
+        gen: ['huius',  'huius',  'huius'],
+        dat: ['huic',   'huic',   'huic'],
+        acc: ['hunc',   'hanc',   'hoc'],
+        abl: ['hōc', 'hāc', 'hōc']
+    },
+    'hic-pl': {
+        nom: ['hī',      'hae',           'haec'],
+        gen: ['hōrum',   'hārum',    'hōrum'],
+        dat: ['hīs',     'hīs',      'hīs'],
+        acc: ['hōs',     'hās',      'haec'],
+        abl: ['hīs',     'hīs',      'hīs']
+    },
+    'ille-sg': {
+        nom: ['ille',            'illa',              'illud'],
+        gen: ['illīus',     'illīus',       'illīus'],
+        dat: ['illī',       'illī',         'illī'],
+        acc: ['illum',           'illam',             'illud'],
+        abl: ['illō',       'illā',         'illō']
+    },
+    'ille-pl': {
+        nom: ['illī',       'illae',             'illa'],
+        gen: ['illōrum',    'illārum',      'illōrum'],
+        dat: ['illīs',      'illīs',        'illīs'],
+        acc: ['illōs',      'illās',        'illa'],
+        abl: ['illīs',      'illīs',        'illīs']
+    }
+};
+
+/* the meaning column from the study guide */
+const MEANINGS = {
+    'hic-sg':  { nom:'this',  gen:'of this',  dat:'to/for this',  acc:'[verb] this',  abl:'by/with/from this'  },
+    'hic-pl':  { nom:'these', gen:'of these', dat:'to/for these', acc:'[verb] these', abl:'by/with/from these' },
+    'ille-sg': { nom:'that',  gen:'of that',  dat:'to/for that',  acc:'[verb] that',  abl:'by/with/from that'  },
+    'ille-pl': { nom:'those', gen:'of those', dat:'to/for those', acc:'[verb] those', abl:'by/with/from those' }
+};
+
+/* what counts as a right answer in the meaning column */
+function meaningAccepts(chartId, caseKey) {
+    const thing = { 'hic-sg':'this', 'hic-pl':'these', 'ille-sg':'that', 'ille-pl':'those' }[chartId];
+    switch (caseKey) {
+        case 'nom': return [thing];
+        case 'gen': return ['of ' + thing];
+        case 'dat': return ['to ' + thing, 'for ' + thing, 'to for ' + thing, 'to or for ' + thing];
+        case 'acc': return [thing, 'verb ' + thing];
+        case 'abl': return ['by ' + thing, 'with ' + thing, 'from ' + thing,
+                            'by with from ' + thing, 'by with or from ' + thing];
+    }
+}
+
+/* ═══════════════════════ HELPERS ═══════════════════════ */
+
+const $  = (sel, root) => (root || document).querySelector(sel);
+const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+/* strip macrons + punctuation for forgiving comparison */
+function loose(s) {
+    return (s || '')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+function looseWord(s) { return loose(s).replace(/\s/g, ''); }
+
+const caseByKey   = k => CASES.find(c => c.key === k);
+const genderByKey = k => GENDERS.find(g => g.key === k);
+const chartById   = id => CHARTS.find(c => c.id === id);
+
+function parseLabel(caseKey, num, genderKey) {
+    return caseByKey(caseKey).abbr + '. ' +
+           NUMBERS.find(n => n.key === num).abbr + '. ' +
+           genderByKey(genderKey).abbr + '.';
+}
+function promptLabel(caseKey, num, genderKey) {
+    return caseByKey(caseKey).full + ' ' +
+           NUMBERS.find(n => n.key === num).full + ' ' +
+           genderByKey(genderKey).full;
+}
+function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+function sample(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/* ── persistent miss counts, so drills favour weak spots ── */
+const STORE_KEY = 'latin-demonstratives-v1';
+let store = { misses: {}, macrons: false };
+try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) store = Object.assign(store, JSON.parse(raw));
+} catch (e) { /* private mode, no problem */ }
+function saveStore() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {}
+}
+function itemKey(it) { return it.chartId + '.' + it.caseKey + '.' + it.genderKey; }
+function noteMiss(it)  { const k = itemKey(it); store.misses[k] = Math.min(6, (store.misses[k] || 0) + 2); saveStore(); }
+function noteHit(it)   { const k = itemKey(it); if (store.misses[k]) { store.misses[k] -= 1; if (store.misses[k] <= 0) delete store.misses[k]; saveStore(); } }
+
+/* weighted pick: missed forms come round more often, and never twice in a row */
+function weightedPick(pool, lastKey) {
+    const usable = pool.length > 1 ? pool.filter(it => itemKey(it) !== lastKey) : pool;
+    const list = usable.length ? usable : pool;
+    const weights = list.map(it => 1 + (store.misses[itemKey(it)] || 0));
+    let total = weights.reduce((a, b) => a + b, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < list.length; i++) {
+        r -= weights[i];
+        if (r <= 0) return list[i];
+    }
+    return list[list.length - 1];
+}
+
+/* ── the item pool, driven by the scope checkboxes ── */
+let scope = ['hic-sg', 'hic-pl', 'ille-sg', 'ille-pl'];
+
+function buildPool() {
+    const pool = [];
+    scope.forEach(chartId => {
+        const chart = chartById(chartId);
+        CASES.forEach(c => {
+            GENDERS.forEach((g, gi) => {
+                pool.push({
+                    chartId,
+                    word: chart.word,
+                    num: chart.num,
+                    caseKey: c.key,
+                    genderKey: g.key,
+                    genderIdx: gi,
+                    form: FORMS[chartId][c.key][gi],
+                    meaning: MEANINGS[chartId][c.key]
+                });
+            });
+        });
+    });
+    return pool;
+}
+let POOL = buildPool();
+
+/* every parse a given form can have, inside the current scope */
+function parsesOf(form, strict) {
+    const target = strict ? form : looseWord(form);
+    const out = [];
+    POOL.forEach(it => {
+        const cmp = strict ? it.form : looseWord(it.form);
+        if (cmp === target) out.push(it);
+    });
+    return out;
+}
+function parseListText(items) {
+    const seen = new Set();
+    const labels = [];
+    items.forEach(it => {
+        const l = parseLabel(it.caseKey, it.num, it.genderKey) + ' (' + it.word + ')';
+        if (!seen.has(l)) { seen.add(l); labels.push(l); }
+    });
+    return labels.join('  ·  ');
+}
+
+/* ── shared scope-picker widget ── */
+function renderScopeCard(container, onChange) {
+    container.innerHTML = '';
+    const row = document.createElement('div');
+    row.className = 'row';
+    const label = document.createElement('span');
+    label.className = 'label';
+    label.textContent = 'Practise';
+    row.appendChild(label);
+    CHARTS.forEach(chart => {
+        const b = document.createElement('button');
+        b.className = 'chip' + (scope.includes(chart.id) ? ' on' : '');
+        b.textContent = chart.word + ' ' + (chart.num === 'sg' ? 'sing.' : 'plur.');
+        b.addEventListener('click', () => {
+            const i = scope.indexOf(chart.id);
+            if (i >= 0) { if (scope.length === 1) return; scope.splice(i, 1); }
+            else scope.push(chart.id);
+            POOL = buildPool();
+            refreshScopeCards();
+            onChange();
+        });
+        row.appendChild(b);
+    });
+    container.appendChild(row);
+
+    const row2 = document.createElement('div');
+    row2.className = 'row';
+    const lab = document.createElement('label');
+    lab.className = 'toggle-line';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = store.macrons;
+    cb.addEventListener('change', () => {
+        store.macrons = cb.checked;
+        saveStore();
+        $('#chart-macrons').checked = cb.checked;
+        refreshScopeCards();
+    });
+    lab.appendChild(cb);
+    lab.appendChild(document.createTextNode(' Require macrons when typing'));
+    row2.appendChild(lab);
+    container.appendChild(row2);
+}
+const scopeTargets = [];
+function refreshScopeCards() { scopeTargets.forEach(fn => fn()); }
+
+/* ── macron keypad ── */
+function buildPad(container, getInput) {
+    container.innerHTML = '';
+    ['ā', 'ē', 'ī', 'ō', 'ū'].forEach(ch => {
+        const b = document.createElement('button');
+        b.className = 'macron-key';
+        b.type = 'button';
+        b.textContent = ch;
+        b.addEventListener('click', () => {
+            const input = getInput();
+            if (!input) return;
+            const start = input.selectionStart ?? input.value.length;
+            const end   = input.selectionEnd   ?? input.value.length;
+            input.value = input.value.slice(0, start) + ch + input.value.slice(end);
+            input.focus();
+            const pos = start + 1;
+            input.setSelectionRange(pos, pos);
+        });
+        container.appendChild(b);
+    });
+}
+
+/* ═══════════════════════ TABS ═══════════════════════ */
+
+$$('#tabs .tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        $$('#tabs .tab').forEach(t => t.classList.toggle('active', t === tab));
+        const mode = tab.dataset.mode;
+        $$('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + mode));
+        if (mode === 'type')     { nextType(); setTimeout(() => $('#type-input').focus(), 60); }
+        if (mode === 'identify') nextIdentify();
+        if (mode === 'meaning')  nextMeaning();
+        if (mode === 'flash' && !flashDeck.length) buildFlashDeck();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+});
+
+/* ═══════════════════════ 1. FILL THE CHART ═══════════════════════ */
+
+let activeChart = 'hic-sg';
+
+function renderChartPicker() {
+    const box = $('#chart-picker');
+    box.innerHTML = '';
+    CHARTS.forEach(chart => {
+        const b = document.createElement('button');
+        b.className = 'chip' + (chart.id === activeChart ? ' on' : '');
+        b.textContent = chart.word + ' ' + (chart.num === 'sg' ? 'sing.' : 'plur.');
+        b.addEventListener('click', () => { activeChart = chart.id; renderChartPicker(); renderChart(); });
+        box.appendChild(b);
+    });
+}
+
+function renderChart() {
+    const chart = chartById(activeChart);
+    const withMeanings = $('#chart-meanings').checked;
+    $('#chart-title').textContent = chart.title;
+    $('#chart-gloss').textContent = '“' + chart.gloss + '” — fill in every box, then check your work.';
+    $('#chart-score').textContent = '';
+
+    const table = $('#chart-table');
+    table.innerHTML = '';
+
+    const head = document.createElement('tr');
+    head.innerHTML = '<th class="case-head"></th>' +
+        GENDERS.map(g => '<th>' + g.abbr + '</th>').join('') +
+        (withMeanings ? '<th>Meaning</th>' : '');
+    table.appendChild(head);
+
+    CASES.forEach(c => {
+        const tr = document.createElement('tr');
+        const th = document.createElement('td');
+        th.className = 'case-cell';
+        th.textContent = c.abbr;
+        tr.appendChild(th);
+
+        GENDERS.forEach((g, gi) => {
+            const td = document.createElement('td');
+            const wrap = document.createElement('div');
+            wrap.className = 'cell-wrap';
+            const input = document.createElement('input');
+            input.className = 'cell-input';
+            input.type = 'text';
+            input.autocomplete = 'off';
+            input.autocapitalize = 'off';
+            input.spellcheck = false;
+            input.dataset.kind = 'form';
+            input.dataset.case = c.key;
+            input.dataset.gender = String(gi);
+            input.setAttribute('aria-label', promptLabel(c.key, chart.num, g.key) + ' of ' + chart.word);
+            const fix = document.createElement('div');
+            fix.className = 'cell-fix';
+            wrap.appendChild(input);
+            wrap.appendChild(fix);
+            td.appendChild(wrap);
+            tr.appendChild(td);
+        });
+
+        if (withMeanings) {
+            const td = document.createElement('td');
+            const wrap = document.createElement('div');
+            wrap.className = 'cell-wrap';
+            const input = document.createElement('input');
+            input.className = 'cell-input wide';
+            input.type = 'text';
+            input.autocomplete = 'off';
+            input.spellcheck = false;
+            input.dataset.kind = 'meaning';
+            input.dataset.case = c.key;
+            input.placeholder = 'English';
+            input.setAttribute('aria-label', 'Meaning of the ' + caseByKey(c.key).full);
+            const fix = document.createElement('div');
+            fix.className = 'cell-fix';
+            wrap.appendChild(input);
+            wrap.appendChild(fix);
+            td.appendChild(wrap);
+            tr.appendChild(td);
+        }
+        table.appendChild(tr);
+    });
+
+    /* Enter moves to the next box */
+    const inputs = $$('.cell-input', table);
+    inputs.forEach((input, i) => {
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (i + 1 < inputs.length) inputs[i + 1].focus();
+                else checkChart();
+            }
+        });
+        input.addEventListener('input', () => {
+            input.classList.remove('ok', 'bad');
+            input.parentElement.querySelector('.cell-fix').classList.remove('show');
+        });
+    });
+}
+
+function checkChart() {
+    const chart = chartById(activeChart);
+    const strict = $('#chart-macrons').checked;
+    let right = 0, total = 0;
+
+    $$('#chart-table .cell-input').forEach(input => {
+        const caseKey = input.dataset.case;
+        const fix = input.parentElement.querySelector('.cell-fix');
+        let ok, answer;
+
+        if (input.dataset.kind === 'form') {
+            answer = FORMS[activeChart][caseKey][Number(input.dataset.gender)];
+            const typed = input.value.trim();
+            ok = strict
+                ? typed.toLowerCase() === answer.toLowerCase()
+                : looseWord(typed) === looseWord(answer) && typed !== '';
+        } else {
+            answer = MEANINGS[activeChart][caseKey];
+            const typed = loose(input.value);
+            ok = typed !== '' && meaningAccepts(activeChart, caseKey).some(a => loose(a) === typed);
+        }
+
+        total++;
+        input.classList.toggle('ok', ok);
+        input.classList.toggle('bad', !ok);
+        if (ok) { right++; fix.classList.remove('show'); }
+        else { fix.textContent = answer; fix.classList.add('show'); }
+
+        /* feed the drill engine */
+        const item = { chartId: activeChart, caseKey, genderKey: GENDERS[Number(input.dataset.gender || 0)].key };
+        if (input.dataset.kind === 'form') { ok ? noteHit(item) : noteMiss(item); }
+    });
+
+    const pct = Math.round(right / total * 100);
+    const el = $('#chart-score');
+    el.textContent = right + ' / ' + total + '  (' + pct + '%)';
+    el.style.color = pct === 100 ? 'var(--success)' : (pct >= 70 ? 'var(--text)' : 'var(--error)');
+}
+
+function revealChart() {
+    $$('#chart-table .cell-input').forEach(input => {
+        const caseKey = input.dataset.case;
+        input.value = input.dataset.kind === 'form'
+            ? FORMS[activeChart][caseKey][Number(input.dataset.gender)]
+            : MEANINGS[activeChart][caseKey];
+        input.classList.remove('bad');
+        input.parentElement.querySelector('.cell-fix').classList.remove('show');
+    });
+    $('#chart-score').textContent = '';
+}
+
+function clearChart() {
+    $$('#chart-table .cell-input').forEach(input => {
+        input.value = '';
+        input.classList.remove('ok', 'bad');
+        input.parentElement.querySelector('.cell-fix').classList.remove('show');
+    });
+    $('#chart-score').textContent = '';
+}
+
+$('#chart-check').addEventListener('click', checkChart);
+$('#chart-reveal').addEventListener('click', revealChart);
+$('#chart-clear').addEventListener('click', clearChart);
+$('#chart-meanings').addEventListener('change', renderChart);
+$('#chart-macrons').addEventListener('change', () => { store.macrons = $('#chart-macrons').checked; saveStore(); refreshScopeCards(); });
+$('#chart-macrons').checked = store.macrons;
+
+buildPad($('#chart-pad'), () => {
+    const el = document.activeElement;
+    return el && el.classList.contains('cell-input') ? el : $('#chart-table .cell-input');
+});
+renderChartPicker();
+renderChart();
+
+/* ═══════════════════════ 2. TYPE THE FORM ═══════════════════════ */
+
+const typeState = { item: null, answered: false, right: 0, asked: 0, streak: 0, best: 0, missed: [], lastKey: '' };
+
+renderScopeCard($('#type-scope-card'), () => nextType());
+scopeTargets.push(() => renderScopeCard($('#type-scope-card'), () => nextType()));
+
+function paintTypeScore() {
+    $('#type-score').innerHTML =
+        'Score <b>' + typeState.right + '/' + typeState.asked + '</b>' +
+        ' &middot; streak <b>' + typeState.streak + '</b>' +
+        ' &middot; best <b>' + typeState.best + '</b>';
+}
+
+function nextType() {
+    const it = weightedPick(POOL, typeState.lastKey);
+    typeState.item = it;
+    typeState.answered = false;
+    typeState.lastKey = itemKey(it);
+
+    $('#type-kicker').textContent = 'Give the ' + promptLabel(it.caseKey, it.num, it.genderKey);
+    $('#type-prompt').innerHTML = '<span class="latin">' + it.word + '</span>';
+    $('#type-note').textContent = '“' + it.meaning + '”';
+    const input = $('#type-input');
+    input.value = '';
+    input.classList.remove('ok', 'bad');
+    input.disabled = false;
+    $('#type-feedback').classList.remove('show', 'good', 'bad');
+    $('#type-submit').textContent = 'Check';
+    paintTypeScore();
+    input.focus();
+}
+
+function submitType() {
+    if (typeState.answered) { nextType(); return; }
+    const it = typeState.item;
+    const typed = $('#type-input').value.trim();
+    if (!typed) { $('#type-input').focus(); return; }
+
+    const exact  = typed.toLowerCase() === it.form.toLowerCase();
+    const looseOk = looseWord(typed) === looseWord(it.form);
+    const ok = store.macrons ? exact : looseOk;
+
+    typeState.asked++;
+    const fb = $('#type-feedback');
+    if (ok) {
+        typeState.right++;
+        typeState.streak++;
+        typeState.best = Math.max(typeState.best, typeState.streak);
+        noteHit(it);
+        $('#type-input').classList.add('ok');
+        fb.className = 'feedback show good';
+        fb.innerHTML = (exact ? 'Recte! — correct.' : 'Correct.') +
+            '<span class="fb-detail">' + it.form + ' — ' + parseLabel(it.caseKey, it.num, it.genderKey) +
+            (exact ? '' : ' — note the macron') + '</span>';
+    } else {
+        typeState.streak = 0;
+        noteMiss(it);
+        typeState.missed.push(it);
+        $('#type-input').classList.add('bad');
+        fb.className = 'feedback show bad';
+        fb.innerHTML = 'Not quite — the answer is <b>' + it.form + '</b>.' +
+            (looseOk ? '<span class="fb-detail">You had the letters right; it needs the macron.</span>'
+                     : '<span class="fb-detail">' + promptLabel(it.caseKey, it.num, it.genderKey) +
+                       ' of ' + it.word + ', “' + it.meaning + '”</span>');
+    }
+    typeState.answered = true;
+    $('#type-submit').textContent = 'Next';
+    paintTypeScore();
+    paintTypeReview();
+    $('#type-submit').focus();
+}
+
+function paintTypeReview() {
+    const card = $('#type-review-card');
+    const list = $('#type-review');
+    /* newest first, de-duplicated */
+    const seen = new Set();
+    const rows = [];
+    typeState.missed.slice().reverse().forEach(it => {
+        const k = itemKey(it);
+        if (seen.has(k)) return;
+        seen.add(k);
+        rows.push(it);
+    });
+    if (!rows.length) { card.style.display = 'none'; return; }
+    card.style.display = 'block';
+    list.innerHTML = rows.slice(0, 12).map(it =>
+        '<li><span class="r-q">' + it.word + ' · ' + parseLabel(it.caseKey, it.num, it.genderKey) +
+        '</span><span class="r-a">' + it.form + '</span></li>').join('');
+}
+
+$('#type-submit').addEventListener('click', submitType);
+$('#type-skip').addEventListener('click', () => {
+    if (typeState.answered) { nextType(); return; }
+    const it = typeState.item;
+    typeState.asked++;
+    typeState.streak = 0;
+    noteMiss(it);
+    typeState.missed.push(it);
+    $('#type-input').value = it.form;
+    const fb = $('#type-feedback');
+    fb.className = 'feedback show bad';
+    fb.innerHTML = '<b>' + it.form + '</b><span class="fb-detail">' +
+        promptLabel(it.caseKey, it.num, it.genderKey) + ' of ' + it.word + ', “' + it.meaning + '”</span>';
+    typeState.answered = true;
+    $('#type-submit').textContent = 'Next';
+    paintTypeScore();
+    paintTypeReview();
+});
+$('#type-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); submitType(); }
+});
+buildPad($('#type-pad'), () => $('#type-input'));
+
+/* ═══════════════════════ 3. NAME THE FORM ═══════════════════════ */
+
+const idState = { item: null, answered: false, right: 0, asked: 0, streak: 0, best: 0, pick: { case:null, number:null, gender:null }, lastForm:'' };
+
+renderScopeCard($('#id-scope-card'), () => nextIdentify());
+scopeTargets.push(() => renderScopeCard($('#id-scope-card'), () => nextIdentify()));
+
+function buildPickRows() {
+    const mk = (container, list, group) => {
+        container.innerHTML = '';
+        list.forEach(opt => {
+            const b = document.createElement('button');
+            b.className = 'chip';
+            b.textContent = opt.abbr;
+            b.title = opt.full;
+            b.dataset.value = opt.key;
+            b.addEventListener('click', () => {
+                if (idState.answered) return;
+                idState.pick[group] = opt.key;
+                $$('button', container).forEach(x => x.classList.toggle('on', x === b));
+            });
+            container.appendChild(b);
+        });
+    };
+    mk($('#id-case'), CASES, 'case');
+    mk($('#id-number'), NUMBERS, 'number');
+    mk($('#id-gender'), GENDERS, 'gender');
+}
+buildPickRows();
+
+function paintIdScore() {
+    $('#id-score').innerHTML =
+        'Score <b>' + idState.right + '/' + idState.asked + '</b>' +
+        ' &middot; streak <b>' + idState.streak + '</b>' +
+        ' &middot; best <b>' + idState.best + '</b>';
+}
+
+function nextIdentify() {
+    /* pick a distinct surface form from the pool */
+    const forms = Array.from(new Set(POOL.map(it => it.form)));
+    let form = sample(forms);
+    if (forms.length > 1) { let guard = 0; while (form === idState.lastForm && guard++ < 8) form = sample(forms); }
+    idState.lastForm = form;
+    idState.item = { form, parses: parsesOf(form, true) };
+    idState.answered = false;
+    idState.pick = { case:null, number:null, gender:null };
+
+    $('#id-prompt').textContent = form;
+    const n = idState.item.parses.length;
+    $('#id-note').textContent = n > 1
+        ? 'This form has ' + n + ' possible answers — any one of them counts.'
+        : 'Pick the case, number, and gender.';
+    $$('#id-case button, #id-number button, #id-gender button').forEach(b => b.classList.remove('on'));
+    $('#id-feedback').classList.remove('show', 'good', 'bad');
+    $('#id-submit').textContent = 'Check';
+    paintIdScore();
+}
+
+function submitIdentify() {
+    if (idState.answered) { nextIdentify(); return; }
+    const p = idState.pick;
+    if (!p.case || !p.number || !p.gender) {
+        const fb = $('#id-feedback');
+        fb.className = 'feedback show bad';
+        fb.innerHTML = 'Choose a case, a number, and a gender first.';
+        return;
+    }
+    const form = idState.item.form;
+    const strictHit = idState.item.parses.some(it =>
+        it.caseKey === p.case && it.num === p.number && it.genderKey === p.gender);
+    const looseHit = parsesOf(form, false).some(it =>
+        it.caseKey === p.case && it.num === p.number && it.genderKey === p.gender);
+
+    idState.asked++;
+    const fb = $('#id-feedback');
+    const allParses = parseListText(idState.item.parses);
+
+    if (strictHit || looseHit) {
+        idState.right++;
+        idState.streak++;
+        idState.best = Math.max(idState.best, idState.streak);
+        idState.item.parses.forEach(noteHit);
+        fb.className = 'feedback show good';
+        fb.innerHTML = (strictHit ? 'Recte! — correct.' : 'Almost — watch the macron.') +
+            '<span class="fb-detail"><b>' + form + '</b> can be: ' + allParses +
+            (strictHit ? '' : '<br>The form you named is spelled with a macron.') + '</span>';
+    } else {
+        idState.streak = 0;
+        idState.item.parses.forEach(noteMiss);
+        fb.className = 'feedback show bad';
+        fb.innerHTML = 'Not this time.' +
+            '<span class="fb-detail"><b>' + form + '</b> can be: ' + allParses + '</span>';
+    }
+    idState.answered = true;
+    $('#id-submit').textContent = 'Next';
+    paintIdScore();
+}
+
+$('#id-submit').addEventListener('click', submitIdentify);
+$('#id-skip').addEventListener('click', () => {
+    if (idState.answered) { nextIdentify(); return; }
+    idState.asked++;
+    idState.streak = 0;
+    idState.item.parses.forEach(noteMiss);
+    const fb = $('#id-feedback');
+    fb.className = 'feedback show bad';
+    fb.innerHTML = '<b>' + idState.item.form + '</b><span class="fb-detail">' +
+        parseListText(idState.item.parses) + '</span>';
+    idState.answered = true;
+    $('#id-submit').textContent = 'Next';
+    paintIdScore();
+});
+
+/* ═══════════════════════ 4. MEANINGS ═══════════════════════ */
+
+const mnState = { answered: false, right: 0, asked: 0, lastKey: '' };
+
+renderScopeCard($('#mn-scope-card'), () => nextMeaning());
+scopeTargets.push(() => renderScopeCard($('#mn-scope-card'), () => nextMeaning()));
+
+function paintMnScore() {
+    $('#mn-score').innerHTML = 'Score <b>' + mnState.right + '/' + mnState.asked + '</b>';
+}
+
+function nextMeaning() {
+    mnState.answered = false;
+    $('#mn-feedback').classList.remove('show', 'good', 'bad');
+    $('#mn-next').style.display = 'none';
+
+    const latinToEnglish = Math.random() < 0.6;
+    const it = weightedPick(POOL, mnState.lastKey);
+    mnState.lastKey = itemKey(it);
+
+    /* every English meaning that appears anywhere in the four charts */
+    const allMeanings = [];
+    CHARTS.forEach(ch => CASES.forEach(c => allMeanings.push(MEANINGS[ch.id][c.key])));
+    const uniqueMeanings = Array.from(new Set(allMeanings));
+
+    if (latinToEnglish) {
+        /* a form like illī or haec has more than one reading, so accept any of them */
+        const parses = parsesOf(it.form, true);
+        const accepted = Array.from(new Set(parses.map(p => p.meaning)));
+        const shown = shuffle(accepted).slice(0, 2);
+        const wrong = shuffle(uniqueMeanings.filter(m => !accepted.includes(m))).slice(0, 4 - shown.length);
+
+        $('#mn-kicker').textContent = accepted.length > 1
+            ? 'What can this form mean? (more than one answer works)'
+            : 'What does this form mean?';
+        $('#mn-prompt').innerHTML = '<span class="latin">' + it.form + '</span>';
+        renderMcOptions(shuffle(shown.concat(wrong)), shown,
+            '<b>' + it.form + '</b> can be: ' + parseListText(parses));
+    } else {
+        const correct = it.meaning;
+        const rightLabel = caseByKey(it.caseKey).full + ' ' + NUMBERS.find(n => n.key === it.num).full;
+        const labels = [];
+        CASES.forEach(c => NUMBERS.forEach(n => labels.push(c.full + ' ' + n.full)));
+        const wrong = shuffle(labels.filter(l => l !== rightLabel)).slice(0, 3);
+
+        $('#mn-kicker').textContent = 'Which case and number has this meaning?';
+        $('#mn-prompt').textContent = '\u201c' + correct + '\u201d';
+        renderMcOptions(shuffle([rightLabel].concat(wrong)), [rightLabel],
+            '\u201c' + correct + '\u201d is the ' + rightLabel.toLowerCase() +
+            ' \u2014 e.g. <b>' + it.form + '</b>.');
+    }
+    paintMnScore();
+}
+
+function renderMcOptions(options, accepted, detail) {
+    const box = $('#mn-options');
+    box.innerHTML = '';
+    options.forEach(text => {
+        const b = document.createElement('button');
+        b.className = 'mc-opt';
+        b.textContent = text;
+        b.addEventListener('click', () => {
+            if (mnState.answered) return;
+            mnState.answered = true;
+            mnState.asked++;
+            const ok = accepted.includes(text);
+            if (ok) mnState.right++;
+            $$('.mc-opt', box).forEach(o => {
+                o.disabled = true;
+                if (accepted.includes(o.textContent)) o.classList.add('ok');
+                else if (o === b) o.classList.add('bad');
+            });
+            const fb = $('#mn-feedback');
+            fb.className = 'feedback show ' + (ok ? 'good' : 'bad');
+            const answerText = accepted.length > 1
+                ? 'Either \u201c' + accepted.join('\u201d or \u201c') + '\u201d works.'
+                : 'The answer is \u201c' + accepted[0] + '\u201d.';
+            fb.innerHTML = (ok ? 'Recte!' : answerText) + '<span class="fb-detail">' + detail + '</span>';
+            $('#mn-next').style.display = 'inline-block';
+            paintMnScore();
+        });
+        box.appendChild(b);
+    });
+}
+$('#mn-next').addEventListener('click', nextMeaning);
+
+/* ═══════════════════════ 5. FLASHCARDS ═══════════════════════ */
+
+let flashDeck = [];
+let flashIdx = 0;
+let flashFlipped = false;
+let flashDone = 0;
+
+renderScopeCard($('#fl-scope-card'), () => buildFlashDeck());
+scopeTargets.push(() => renderScopeCard($('#fl-scope-card'), () => buildFlashDeck()));
+
+function buildFlashDeck() {
+    /* one card per distinct form in scope, front = form, back = every parse */
+    const byForm = new Map();
+    POOL.forEach(it => {
+        if (!byForm.has(it.form)) byForm.set(it.form, []);
+        byForm.get(it.form).push(it);
+    });
+    flashDeck = shuffle(Array.from(byForm.entries()).map(([form, items]) => ({ form, items })));
+    flashIdx = 0;
+    flashDone = 0;
+    flashFlipped = false;
+    paintFlash();
+}
+
+function paintFlash() {
+    const total = flashDeck.length;
+    $('#fl-score').innerHTML = total
+        ? 'Card <b>' + Math.min(flashIdx + 1, total) + '</b> of <b>' + total + '</b> &middot; learned <b>' + flashDone + '</b>'
+        : '';
+
+    if (!total) { $('#flash-front').textContent = ''; return; }
+
+    if (flashIdx >= total) {
+        $('#flash-front').textContent = 'Deck finished — optime!';
+        $('#flash-front').classList.add('small');
+        $('#flash-back').style.display = 'none';
+        $('#flash-hint').textContent = 'Reshuffle to go again.';
+        $('#flash-grade').style.display = 'none';
+        return;
+    }
+
+    const card = flashDeck[flashIdx];
+    $('#flash-front').textContent = card.form;
+    $('#flash-front').classList.remove('small');
+    const back = $('#flash-back');
+    if (flashFlipped) {
+        const lines = [];
+        const seen = new Set();
+        card.items.forEach(it => {
+            const key = it.caseKey + it.num + it.genderKey;
+            if (seen.has(key)) return;
+            seen.add(key);
+            lines.push('<div>' + parseLabel(it.caseKey, it.num, it.genderKey) +
+                ' of <b>' + it.word + '</b> <span class="muted">— “' + it.meaning + '”</span></div>');
+        });
+        back.innerHTML = lines.join('');
+        back.style.display = 'block';
+        $('#flash-hint').textContent = 'did you get it?';
+        $('#flash-grade').style.display = 'flex';
+    } else {
+        back.style.display = 'none';
+        $('#flash-hint').textContent = 'tap the card to flip';
+        $('#flash-grade').style.display = 'none';
+    }
+}
+
+$('#flash-card').addEventListener('click', () => {
+    if (flashIdx >= flashDeck.length) return;
+    flashFlipped = !flashFlipped;
+    paintFlash();
+});
+$('#flash-got').addEventListener('click', e => {
+    e.stopPropagation();
+    if (flashIdx >= flashDeck.length) return;
+    flashDeck[flashIdx].items.forEach(noteHit);
+    flashDone++;
+    flashIdx++;
+    flashFlipped = false;
+    paintFlash();
+});
+$('#flash-again').addEventListener('click', e => {
+    e.stopPropagation();
+    if (flashIdx >= flashDeck.length) return;
+    const card = flashDeck[flashIdx];
+    card.items.forEach(noteMiss);
+    flashDeck.splice(flashIdx, 1);
+    /* drop it a few cards back so it comes round again */
+    const insertAt = Math.min(flashDeck.length, flashIdx + 3);
+    flashDeck.splice(insertAt, 0, card);
+    flashFlipped = false;
+    paintFlash();
+});
+$('#flash-shuffle').addEventListener('click', buildFlashDeck);
+
+/* ═══════════════════════ 6. STUDY SHEET ═══════════════════════ */
+
+(function renderStudySheet() {
+    const box = $('#study-tables');
+    CHARTS.forEach(chart => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const rows = CASES.map(c => {
+            const f = FORMS[chart.id][c.key];
+            return '<tr><td class="case-cell">' + c.abbr + '</td>' +
+                f.map(x => '<td style="padding:6px 8px;font-family:\'DM Serif Display\',Georgia,serif;font-size:1.02rem">' + x + '</td>').join('') +
+                '<td style="padding:6px 8px;font-size:0.86rem;color:var(--text-muted)">' + MEANINGS[chart.id][c.key] + '</td></tr>';
+        }).join('');
+        card.innerHTML =
+            '<div class="chart-title">' + chart.title + '</div>' +
+            '<div class="chart-gloss">“' + chart.gloss + '”</div>' +
+            '<div class="chart-scroll"><table class="chart">' +
+            '<tr><th class="case-head"></th>' + GENDERS.map(g => '<th>' + g.abbr + '</th>').join('') +
+            '<th>Meaning</th></tr>' + rows + '</table></div>';
+        box.appendChild(card);
+    });
+})();
+
+/* ═══════════════════════ INIT ═══════════════════════ */
+nextType();
+nextIdentify();
+nextMeaning();
+buildFlashDeck();
+</script>
+</body>
+</html>
